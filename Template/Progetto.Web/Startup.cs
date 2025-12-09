@@ -6,9 +6,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 //using Progetto.Web.Hubs;
 using Progetto.Web.Infrastructure;
 using Progetto.Web.SignalR.Hubs;
+using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -81,6 +83,15 @@ namespace Progetto.Web
 
             // CONTAINER FOR ALL EXTRA CUSTOM SERVICES
             Container.RegisterTypes(services);
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "WebApp Rendicontazione Api",
+                    Version = "v1"
+                });
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -97,6 +108,12 @@ namespace Progetto.Web
 
             // Localization support if you want to
             app.UseRequestLocalization(SupportedCultures.CultureNames);
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebApp Rendicontazione Api v1");
+            });
 
             app.UseRouting();
 
