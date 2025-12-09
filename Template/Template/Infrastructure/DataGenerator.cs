@@ -2,6 +2,7 @@
 using System.Linq;
 using Template.Services;
 using Template.Services.Shared;
+using Template.Services.Shared.TimeTracking;
 
 namespace Template.Infrastructure
 {
@@ -42,6 +43,39 @@ namespace Template.Infrastructure
                     LastName = "Cognome3",
                     NickName = "Nickname3"
                 });
+
+            context.SaveChanges();
+        }
+
+        public static void InitializeTimeTracking(TemplateDbContext context)
+        {
+            if (context.Projects.Any()) return;
+
+            var project1 = new Project { Name = "Commessa A" };
+            var project2 = new Project { Name = "Commessa B" };
+
+            context.Projects.AddRange(project1, project2);
+
+            var user = context.Users.First();
+
+            context.TimeEntries.AddRange(
+                new TimeEntry
+                {
+                    UserId = user.Id,
+                    Date = DateTime.Today.AddDays(-1),
+                    HoursWorked = 8,
+                    ProjectId = project1.Id,
+                    Notes = "Analisi requisiti"
+                },
+                new TimeEntry
+                {
+                    UserId = user.Id,
+                    Date = DateTime.Today,
+                    HoursWorked = 6,
+                    ProjectId = project2.Id,
+                    Notes = "Sviluppo funzionalità"
+                }
+            );
 
             context.SaveChanges();
         }

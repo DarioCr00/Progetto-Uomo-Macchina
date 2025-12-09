@@ -1,0 +1,212 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Rendicontazione";
+}
+
+<div id="rendicontazione-app" class="p-6 max-w-7xl mx-auto">
+    <h1 class="text-3xl font-semibold mb-6">Rendicontazione</h1>
+
+    <!-- TOP: 3 Calendari -->
+    <div class="grid grid-cols-12 gap-4 mb-10">
+
+        <div class="col-span-3">
+            <div class="border rounded-lg p-4 shadow-sm">
+                <h3 class="font-medium text-base mb-3 text-center">
+                    {{ monthName(prevMonth) }} {{ prevYear }}
+                </h3>
+                <div class="calendar" v-html="renderCalendar(prevYear, prevMonth)"></div>
+            </div>
+        </div>
+
+        <div class="col-span-6">
+            <div class="border rounded-lg p-4 shadow-sm">
+                <h3 class="font-medium text-base mb-3 text-center">
+                    {{ monthName(activeMonth) }} {{ activeYear }}
+                </h3>
+                <div class="calendar" v-html="renderCalendar(activeYear, activeMonth)"></div>
+            </div>
+        </div>
+
+        <div class="col-span-3">
+            <div class="border rounded-lg p-4 shadow-sm">
+                <h3 class="font-medium text-base mb-3 text-center">
+                    {{ monthName(nextMonth) }} {{ nextYear }}
+                </h3>
+                <div class="calendar" v-html="renderCalendar(nextYear, nextMonth)"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Toggle modalità -->
+    <div class="flex gap-3 mb-6">
+        <button class="px-4 py-2 border rounded-lg"
+                :class="{ 'bg-blue-600 text-white': mode==='month' }"
+        v-on:click ="setMode('month')">
+            Solo mese corrente
+        </button>
+
+        <button class="px-4 py-2 border rounded-lg"
+                :class="{ 'bg-blue-600 text-white': mode==='upto' }"
+        v-on:click ="setMode('upto')">
+            Dall’inizio ad oggi
+        </button>
+    </div>
+
+    <!-- LISTA DEI GIORNI -->
+    <div class="border rounded-lg p-5 shadow-sm">
+        <h3 class="font-semibold mb-4 text-lg">Giorni (dal più recente)</h3>
+
+        <div v-if="daysList.length === 0" class="text-gray-500">
+            Nessun giorno disponibile
+        </div>
+
+        <div v-else class="space-y-3">
+            <div v-for="d in daysList"
+                 :key="d.date"
+                 class="p-4 rounded-lg flex justify-between items-center"
+                 :class="statusClass(d.status)">
+                <div>
+                    <div class="font-medium text-base">{{ formatDate(d.date) }}</div>
+                    <div class="text-sm text-gray-600">{{ d.summary }}</div>
+                </div>
+
+                <div class="text-sm">
+                    <span v-if="d.totalHours !== null">{{ d.totalHours }}h</span>
+                    <span v-else class="text-gray-400">—</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+    <script>
+        (function () {
+            const { createApp } = Vue;
+
+            createApp({
+                data() {
+                    const now = new Date();
+                    return {
+                        activeYear: now.getFullYear(),
+                        activeMonth: now.getMonth() + 1,
+                        prevYear: null, prevMonth: null,
+                        nextYear: null, nextMonth: null,
+                        mode: 'month',
+                        daysList: [],
+                        calendarStatusCache: {}
+                    };
+                },
+                mounted() {
+                    const m = this.activeMonth;
+                    const y = this.activeYear;
+
+                    const prev = new Date(y, m - 2, 1);
+                    this.prevYear = prev.getFullYear();
+                    this.prevMonth = prev.getMonth() + 1;
+
+                    const next = new Date(y, m, 1);
+                    this.nextYear = next.getFullYear();
+                    this.nextMonth = next.getMonth() + 1;
+
+                    this.fetchMonthStatus(this.activeYear, this.activeMonth).then(() => {
+                        this.buildDaysList();
+                    });
+                },
+                methods: {
+                    monthName(m) {
+                        return new Date(2024, m - 1, 1).toLocaleString("it-IT", { month: "long" });
+                    },
+                    setMode(m) {
+                        this.mode = m;
+                        this.buildDaysList();
+                    },
+                    formatDate(d) {
+                        return new Date(d).toLocaleDateString();
+                    },
+                    statusClass(status) {
+                        switch (status) {
+                            case 'not_reported': return 'bg-white';
+                            case 'insufficient': return 'bg-red-100 border border-red-300';
+                            case 'reported': return 'bg-green-100';
+                            case 'overtime': return 'bg-green-300';
+                            case 'non_working': return 'bg-gray-100 text-gray-500';
+                            default: return '';
+                        }
+                    },
+                    async fetchMonthStatus(year, month) {
+                        const key = `${year}-${String(month).padStart(2,'0')}`;
+                        if (this.calendarStatusCache[key]) return this.calendarStatusCache[key];
+
+                        try {
+                            const res = await axios.get(`/api/timetracking/calendar-status?year=${year}&month=${month}`);
+                            this.calendarStatusCache[key] = res.data;
+                            return res.data;
+                        } catch {
+                            this.calendarStatusCache[key] = [];
+                            return [];
+                        }
+                    },
+                    _cellClassFromState(state) {
+                        switch (state) {
+                            case 'not_reported': return 'border';
+                            case 'insufficient': return 'bg-red-100 border';
+                            case 'reported': return 'bg-green-100 border';
+                            case 'overtime': return 'bg-green-300 border';
+                            case 'non_working': return 'bg-gray-100 border text-gray-400';
+                            default: return 'border';
+                        }
+                    },
+                    renderCalendar(year, month) {
+                        const statusArray = this.calendarStatusCache[`${year}-${String(month).padStart(2,'0')}`] || [];
+                        const first = new Date(year, month - 1, 1);
+                        const last = new Date(year, month, 0);
+                        const startDay = first.getDay();
+
+                        let html = '<table class="w-full text-sm">';
+                        html += '<thead><tr class="text-xs text-gray-600"><th>Do</th><th>Lu</th><th>Ma</th><th>Me</th><th>Gi</th><th>Ve</th><th>Sa</th></tr></thead>';
+                        html += '<tbody><tr>';
+
+                        for (let i = 0; i < startDay; i++) html += '<td></td>';
+
+                        for (let day = 1; day <= last.getDate(); day++) {
+                            const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                            const st = (statusArray.find(s => s.date === dateStr) || {}).state || 'missing';
+                            const cls = this._cellClassFromState(st);
+                            html += `<td class="${cls} text-center p-1">${day}</td>`;
+
+                            const weekDay = (startDay + day) % 7;
+                            if (weekDay === 0) html += '</tr><tr>';
+                        }
+
+                        html += '</tr></tbody></table>';
+                        return html;
+                    },
+                    async buildDaysList() {
+                        const today = new Date();
+                        let from, to;
+
+                        if (this.mode === 'month') {
+                            from = new Date(this.activeYear, this.activeMonth - 1, 1);
+                            to = new Date(this.activeYear, this.activeMonth, 0);
+                        } else {
+                            from = new Date(this.activeYear, 0, 1);
+                            to = today;
+                        }
+
+                        try {
+                            const daysRes = await axios.get(`/api/timetracking/days-list?mode=${this.mode}`);
+                            this.daysList = (daysRes.data || []).sort((a, b) => new Date(b.date) - new Date(a.date));
+                        } catch {
+                            this.daysList = [];
+                        }
+                    }
+                }
+            }).mount('#rendicontazione-app');
+        })();
+    </script>
+}

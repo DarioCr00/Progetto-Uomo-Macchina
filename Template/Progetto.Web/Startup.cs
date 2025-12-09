@@ -12,8 +12,8 @@ using Progetto.Web.SignalR.Hubs;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Template.Infrastructure;
 using Template.Services;
-using Template.Services.Shared;
 
 namespace Progetto.Web
 {
@@ -45,6 +45,9 @@ namespace Progetto.Web
                 options.LoginPath = "/Login/Login";
                 options.LogoutPath = "/Login/Logout";
             });
+
+            services.AddHttpContextAccessor();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
 
             var builder = services.AddMvc()
                 .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
@@ -114,6 +117,7 @@ namespace Progetto.Web
                 endpoints.MapHub<TemplateHub>("/templateHub");
 
                 endpoints.MapAreaControllerRoute("Example", "Example", "Example/{controller=Users}/{action=Index}/{id?}");
+                endpoints.MapAreaControllerRoute("TimeTracking", "TimeTracking", "TimeTracking/{controller=TimeTracking}/{action=Index}/{id?}");
                 endpoints.MapControllerRoute("default", "{controller=Login}/{action=Login}");
             });
         }
