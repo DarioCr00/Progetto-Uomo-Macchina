@@ -1,1 +1,409 @@
 ﻿@import "site.variables.scss";
+
+.custom-navbar {
+    background-color: #374455 !important;
+    padding: 0.6rem 1rem;
+}
+
+.navbar-title {
+    color: white !important;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.navbar-title:hover {
+    color: #d7dce5 !important;
+    cursor: pointer;
+}
+
+/* LINK NELLA NAVBAR */
+.custom-navbar .nav-link {
+    color: white !important;
+    font-weight: 400;
+}
+
+.custom-navbar .nav-link:hover {
+    color: #e5eaff !important;
+    cursor: pointer;
+}
+
+/* STATO ATTIVO */
+.custom-navbar .nav-link.active {
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+/* IMMAGINE UTENTE PIÙ PICCOLA */
+.user-profile-picture-small {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    margin-right: 6px;
+}
+
+/* ICONA HAMBURGER */
+.navbar-toggler {
+    border: none !important;
+}
+
+.navbar-toggler:hover {
+    opacity: 0.8;
+}
+
+#rendicontazione-app {
+    margin-top: 3%;
+}
+
+.calendar table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.calendar th {
+    padding: 4px;
+    font-weight: 600;
+    color: #6b7280; /* grigio */
+}
+
+.calendar td {
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+    text-align: center;
+    border-radius: 6px;
+}
+
+.calendar td.border {
+    border: 1px solid #d1d5db;
+}
+
+.calendar td:hover {
+    background: #e5e7eb;
+}
+
+/* Contenitore: allinea tre card in riga, responsive */
+.calendars-row {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap; /* su mobile vanno a capo */
+}
+
+/* Card comune */
+.calendar-card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.04);
+}
+
+/* dimensioni: small / normal / large */
+.calendar-card.small {
+    flex: 0 0 220px;
+}
+/* mese precedente/prossimo */
+.calendar-card.large {
+    flex: 0 0 520px;
+}
+/* mese corrente centrale */
+.calendar-card.normal {
+    flex: 0 0 320px;
+}
+/* fallback */
+
+/* Headers */
+.calendar-card h3 {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    text-align: center;
+    color: #1f2937;
+}
+
+.calendar-card h4 {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    text-align: center;
+    color: #1f2937;
+}
+
+/* Table styling */
+.calendar table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.calendar thead th {
+    color: #6b7280;
+    font-weight: 600;
+    padding: 6px 4px;
+    text-align: center;
+}
+
+.calendar tbody td {
+    width: 34px;
+    height: 36px;
+    padding: 6px 4px;
+    text-align: center;
+    border-radius: 0;
+}
+
+/* default cell look */
+.cal-cell {
+    transition: background .12s ease, color .12s ease;
+}
+
+/* states */
+.cal-cell.not_reported {
+    background: #ffffff;
+    color: #111827;
+    border: 1px solid transparent;
+}
+
+.cal-cell.insufficient {
+    background: #fff1f2;
+    color: #7f1d1d;
+    border: 1px solid #fecaca;
+}
+/* light red */
+.cal-cell.reported {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #bbf7d0;
+}
+/* light green */
+.cal-cell.overtime {
+    background: #bbf7d0;
+    color: #064e3b;
+    border: 1px solid #86efac;
+}
+/* stronger green */
+.cal-cell.non_working {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+/* gray */
+.cal-cell.missing {
+    background: #ffffff;
+    color: #9ca3af;
+}
+/* fallback */
+
+/* hover */
+.calendar tbody td:hover {
+    background: #eef2ff;
+    cursor: pointer;
+}
+
+/* rendimensionamento per il calendario centrale */
+.calendar.large td {
+    width: 40px;
+    height: 44px;
+    font-size: 1rem;
+}
+
+/* responsive: su schermi piccoli le card diventano full-width */
+@media (max-width: 900px) {
+    .calendar-card.small, .calendar-card.normal, .calendar-card.large {
+        flex: 0 0 100%;
+    }
+}
+
+.toggle-wrapper {
+    display: inline-flex;
+    margin-top: 65px;
+    margin-left: 45px;
+    margin-bottom: 20px;
+    border: 1px solid black;
+    border-radius: 25px;
+    overflow: hidden;
+}
+
+/* Pulsanti base */
+.toggle-btn {
+    padding: 10px 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background: white;
+    border: none;
+    color: #111;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .15s ease-in-out;
+    font-size: 0.95rem;
+}
+
+/* Divisore centrale tra i due */
+.toggle-btn + .toggle-btn {
+    border-left: 1px solid black;
+}
+
+.toggle-btn.selected {
+    background: #17A2B8 !important;
+    color: black !important;
+}
+
+.toggle-btn .checkmark {
+    opacity: 0;
+    transition: opacity .15s ease-in-out;
+}
+
+.toggle-btn.selected .checkmark {
+    opacity: 1;
+}
+
+.toggle-btn:hover {
+    background: #e5f7fa;
+}
+
+.days-list-card {
+    background: #343A40;
+    margin: 0 45px;
+    padding: 20px 24px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    color: white;
+    width: calc(100% - 90px);
+}
+
+.days-list-card table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* table styles inside days-list-card */
+.days-table-wrap {
+    overflow: visible !important;
+    overflow-x: auto;
+}
+
+/* base table */
+.days-table {
+    overflow: visible !important;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.days-table thead th {
+    font-weight: 700;
+    padding: 10px 8px;
+    text-align: left;
+}
+
+.days-table tbody td {
+    padding: 8px 6px;
+    vertical-align: top;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+/* inputs */
+.text-input, .select-input, .hours-input {
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    color: #fff;
+}
+
+.hours-input {
+    text-align: center;
+}
+
+/* suggestions dropdown */
+.relative {
+    position: relative;
+}
+
+.suggestions-list {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 6px);
+    max-height: 180px;
+    overflow-y: auto;
+    background: #24282C;
+    color: #E5E7EB;
+    border-radius: 6px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    z-index: 9999;
+    list-style: none;
+    padding: 4px 0;
+    margin: 0;
+    border: 1px solid #3A4046;
+}
+
+.suggestions-list.floating {
+    background: #24282C;
+    border-radius: 6px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.4);
+    list-style: none;
+    margin: 0;
+    padding: 6px 0;
+}
+
+.suggestions-list li {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    pointer-events: auto;
+}
+
+.suggestions-list li:hover {
+    background: #3A4046;
+}
+
+.suggestions-list .no-results {
+    color: #9CA3AF;
+    padding: 8px 12px;
+    cursor: default;
+}
+
+.select-input {
+    color: #E5E7EB;
+    border: 1px solid #3A4046;
+    border-radius: 6px;
+    padding: 6px 8px;
+}
+
+.select-input option {
+    background: #24282C;
+    color: #E5E7EB;
+}
+
+/* row saved / unsaved */
+.row-saved td {
+    opacity: 1;
+}
+
+.row-unsaved td {
+    opacity: 0.98;
+}
+
+/* delete button */
+.btn-delete {
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 6px;
+}
+
+.btn-delete:hover {
+    color: #ffdddd;
+}
+
+/* small helpers */
+.no-results {
+    font-size: 12px;
+    padding: 8px;
+    color: #666;
+}

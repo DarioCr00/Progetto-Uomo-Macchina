@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Template.Infrastructure;
+using System.Security.Claims;
 
 namespace Template.Infrastructure
 {
@@ -21,15 +17,21 @@ namespace Template.Infrastructure
         {
             get
             {
-                var value = _HttpContextAccessor.HttpContext?.Items["UserId"]?.ToString();
-                return Guid.TryParse(value, out var id) ? id : Guid.Empty;
+                var user = _HttpContextAccessor.HttpContext?.User;
+
+                if (user == null || !user.Identity.IsAuthenticated)
+                    return Guid.Empty;
+
+                var claim = user.FindFirst(ClaimTypes.NameIdentifier);
+
+                return Guid.TryParse(claim?.Value, out var id) ? id : Guid.Empty;
             }
         }
 
         public string Username =>
-            _HttpContextAccessor.HttpContext?.Items["Username"]?.ToString();
+            _HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Name)?.Value;
 
         public bool IsAuthenticated =>
-            UserId != Guid.Empty;
+            _HttpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true;
     }
 }

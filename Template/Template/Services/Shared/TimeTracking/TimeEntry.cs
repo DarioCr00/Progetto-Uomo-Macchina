@@ -23,6 +23,13 @@ namespace Template.Services.Shared.TimeTracking
 
         public WorkType Type { get; set; } = WorkType.Normal;
 
+        [Required]
+        public Guid TaskId { get; set; }
+
+        [ForeignKey(nameof(TaskId))]
+        public TaskItem Task { get; set; }
+
+        [Required]
         public Guid ProjectId { get; set; }
 
         [ForeignKey(nameof(ProjectId))]

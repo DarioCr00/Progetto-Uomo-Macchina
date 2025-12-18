@@ -1,81 +1,172 @@
 ﻿@{
     Layout = "~/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Rendicontazione";
+    ViewData["Title"] = "WebApp Rendicontazione";
 }
 
 <div id="rendicontazione-app" class="p-6 max-w-7xl mx-auto">
-    <h1 class="text-3xl font-semibold mb-6">Rendicontazione</h1>
 
     <!-- TOP: 3 Calendari -->
-    <div class="grid grid-cols-12 gap-4 mb-10">
-
-        <div class="col-span-3">
-            <div class="border rounded-lg p-4 shadow-sm">
-                <h3 class="font-medium text-base mb-3 text-center">
-                    {{ monthName(prevMonth) }} {{ prevYear }}
-                </h3>
-                <div class="calendar" v-html="renderCalendar(prevYear, prevMonth)"></div>
-            </div>
+    <div class="calendars-row mb-8">
+        <div class="calendar-card medium">
+            <h4>{{ monthName(prevMonth) }} {{ prevYear }}</h4>
+            <div class="calendar" v-html="renderCalendar(prevYear, prevMonth, 'medium')"></div>
         </div>
 
-        <div class="col-span-6">
-            <div class="border rounded-lg p-4 shadow-sm">
-                <h3 class="font-medium text-base mb-3 text-center">
-                    {{ monthName(activeMonth) }} {{ activeYear }}
-                </h3>
-                <div class="calendar" v-html="renderCalendar(activeYear, activeMonth)"></div>
-            </div>
+        <div class="calendar-card large">
+            <h3>{{ monthName(activeMonth) }} {{ activeYear }}</h3>
+            <div class="calendar large" v-html="renderCalendar(activeYear, activeMonth, 'large')"></div>
         </div>
 
-        <div class="col-span-3">
-            <div class="border rounded-lg p-4 shadow-sm">
-                <h3 class="font-medium text-base mb-3 text-center">
-                    {{ monthName(nextMonth) }} {{ nextYear }}
-                </h3>
-                <div class="calendar" v-html="renderCalendar(nextYear, nextMonth)"></div>
-            </div>
+        <div class="calendar-card medium">
+            <h4>{{ monthName(nextMonth) }} {{ nextYear }}</h4>
+            <div class="calendar" v-html="renderCalendar(nextYear, nextMonth, 'medium')"></div>
         </div>
-
     </div>
 
     <!-- Toggle modalità -->
-    <div class="flex gap-3 mb-6">
-        <button class="px-4 py-2 border rounded-lg"
-                :class="{ 'bg-blue-600 text-white': mode==='month' }"
+    <div class="toggle-wrapper mb-6">
+
+        <button class="toggle-btn"
+                :class="{ 'selected': mode==='month' }"
         v-on:click ="setMode('month')">
-            Solo mese corrente
+            <span class="checkmark">✔</span>
+            Mese corrente
         </button>
 
-        <button class="px-4 py-2 border rounded-lg"
-                :class="{ 'bg-blue-600 text-white': mode==='upto' }"
+        <button class="toggle-btn"
+                :class="{ 'selected': mode==='upto' }"
         v-on:click ="setMode('upto')">
-            Dall’inizio ad oggi
+            <span class="checkmark">✔</span>
+            Tutti
         </button>
+
     </div>
 
     <!-- LISTA DEI GIORNI -->
-    <div class="border rounded-lg p-5 shadow-sm">
-        <h3 class="font-semibold mb-4 text-lg">Giorni (dal più recente)</h3>
+    <div class="days-list-card">
 
-        <div v-if="daysList.length === 0" class="text-gray-500">
-            Nessun giorno disponibile
-        </div>
+        <!-- table header -->
+        <div class="days-table-wrap">
+            <table class="days-table w-full">
+                <thead style="background:#454D55;">
+                    <tr>
+                        <th class="px-3 py-2 text-left text-white">Giorno</th>
+                        <th class="px-2 py-2 text-center text-white" style="width:85px">Ore</th>
+                        <th class="px-3 py-2 text-left text-white">Descrizione</th>
+                        <th class="px-3 py-2 text-left text-white">Attività</th>
+                        <th class="px-3 py-2 text-left text-white">Task</th>
+                        <th class="px-3 py-2 text-left text-white">Modalità</th>
+                        <th class="px-2 py-2 text-white" style="width:48px"></th>
+                    </tr>
+                </thead>
 
-        <div v-else class="space-y-3">
-            <div v-for="d in daysList"
-                 :key="d.date"
-                 class="p-4 rounded-lg flex justify-between items-center"
-                 :class="statusClass(d.status)">
-                <div>
-                    <div class="font-medium text-base">{{ formatDate(d.date) }}</div>
-                    <div class="text-sm text-gray-600">{{ d.summary }}</div>
-                </div>
+                <tbody>
+                    <!-- Se vuoto -->
+                    <tr v-if="daysWithRows.length===0">
+                        <td colspan="7" class="px-3 py-4 text-gray-300">Nessun giorno disponibile</td>
+                    </tr>
 
-                <div class="text-sm">
-                    <span v-if="d.totalHours !== null">{{ d.totalHours }}h</span>
-                    <span v-else class="text-gray-400">—</span>
-                </div>
-            </div>
+                    <!-- righe raggruppate per giorno -->
+                    <template v-for="(dayObj, di) in daysWithRows" :key="dayObj.date">
+                        <!-- first row of the day (and subsequent rows) -->
+                        <tr v-for="(row, ri) in dayObj.rows" :key="row._localId"
+                            :class="['transition', row.saved ? 'row-saved' : 'row-unsaved']">
+                            <!-- Giorno: only show on first row of day; otherwise empty cell to align -->
+                            <td v-if="ri === 0"
+                                class="px-3 py-2 align-top text-white" 
+                                :rowspan="dayObj.rows.length">
+                                <div class="font-medium">{{ prettyDay(dayObj.date) }}</div>
+                                <!--<div class="text-xs text-gray-300">{{ isoToReadable(dayObj.date) }}</div>-->
+                            </td>
+
+                            <!-- Ore: number input, solo interi 0–24 -->
+                            <td class="px-2 py-2 text-center flex-column align-items-center gap-2 justify-center">
+                                <input type="number" class="hours-input" v-model.number="row.hours"
+                                @@input ="onHoursInput(row)"
+                                @@blur="_autoPersistRow(row)"
+                                       min="0" max="24" step="1"
+                                       :placeholder="0" />
+                            </td>
+
+                            <!-- Descrizione -->
+                            <td class="px-3 py-2">
+                                <input type="text" class="text-input" v-model="row.description" @@blur="_autoPersistRow(row)" placeholder="Descrizione breve dell'attività svolta" />
+                            </td>
+
+                            <!-- Attività: searchable dropdown -->
+                            <td class="px-3 py-2 relative">
+                                <input type="text" class="text-input"
+                                       v-model="row.activityText"
+                                @@input ="onTypeSearch(row,'activity', $event)"
+                                @@focus ="openSuggestions(row,'activity', $event)"
+                                       placeholder="Cerca codice attività"
+                                       autocomplete="off" />
+
+                                <!-- TELEPORT -->
+                                <Teleport to="body">
+                                    <ul v-if="row.suggestionsActivityVisible"
+                                        class="suggestions-list floating"
+                                        :style="row.activityDropdownStyle">
+                                        <li v-for="act in row.activitySuggestions"
+                                            :key="act.id"
+                                        @@click ="selectSuggestion(row,'activity',act)">
+                                            {{ act.code }} - {{ act.name }}
+                                        </li>
+                                        <li v-if="row.activitySuggestions.length===0"
+                                            class="no-results">
+                                            Nessun match
+                                        </li>
+                                    </ul>
+                                </Teleport>
+                            </td>
+
+                            <!-- Task: searchable dropdown -->
+                            <td class="px-3 py-2 relative">
+                                <input type="text"
+                                       class="text-input task-input"
+                                       v-model="row.taskText"
+                                       @@input="onTypeSearch(row,'task', $event)"
+                                       @@focus="openSuggestions(row,'task', $event)"
+                                       placeholder="Cerca codice task"
+                                       autocomplete="off" />
+
+                                <!-- TELEPORT -->
+                                <Teleport to="body">
+                                    <ul v-if="row.suggestionsTaskVisible"
+                                        class="suggestions-list floating"
+                                        :style="row.taskDropdownStyle">
+
+                                        <li v-for="t in row.taskSuggestions"
+                                            :key="t.id"
+                                            @@click="selectSuggestion(row,'task',t)">
+                                            {{ t.code }} - {{ t.name }}
+                                        </li>
+
+                                        <li v-if="row.taskSuggestions.length===0"
+                                            class="no-results">
+                                            Nessun match
+                                        </li>
+                                    </ul>
+                                </Teleport>
+                            </td>
+
+                            <!-- Modalità: select (WorkType) -->
+                            <td class="px-3 py-2">
+                                <select v-model="row.mode" class="select-input" @@change="_autoPersistRow(row)">
+                                    <option v-for="m in workTypes" :value="m.value">{{ m.label }}</option>
+                                </select>
+                            </td>
+
+                            <!-- Azioni: elimina -->
+                            <td class="px-2 py-2 text-center">
+                                <button class="btn-delete" v-on:click.prevent ="deleteRow(dayObj, row)">
+                                    🗑
+                                </button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -97,10 +188,30 @@
                         prevYear: null, prevMonth: null,
                         nextYear: null, nextMonth: null,
                         mode: 'month',
+
+                        // Dati raw da API
                         daysList: [],
-                        calendarStatusCache: {}
+
+                        // [{ date: "YYYY-MM-DD", totalHours, summary, status, rows: [ { _localId, id, date, hours, description, activityId, activityText, ... } ] }]
+                        daysWithRows: [],
+
+                        calendarStatusCache: {},
+
+                        // pool dei suggerimenti
+                        activitiesPool: [], // { id, code, name }
+                        tasksPool: [],      // { id, code, name }
+
+                        workTypes: [
+                            { value: 0, label: 'Normal' },
+                            { value: 1, label: 'Overtime' },
+                            { value: 2, label: 'Travel' },
+                            { value: 3, label: 'Other' },
+                        ],
+
+                        _localRowCounter: 1
                     };
                 },
+
                 mounted() {
                     const m = this.activeMonth;
                     const y = this.activeYear;
@@ -113,62 +224,94 @@
                     this.nextYear = next.getFullYear();
                     this.nextMonth = next.getMonth() + 1;
 
-                    this.fetchMonthStatus(this.activeYear, this.activeMonth).then(() => {
-                        this.buildDaysList();
-                    });
+                    // initialize days + pools
+                    this._initRowsAndPools();
+
+                    // prefetch calendar statuses
+                    this.fetchMonthStatus(this.prevYear, this.prevMonth);
+                    this.fetchMonthStatus(this.activeYear, this.activeMonth);
+                    this.fetchMonthStatus(this.nextYear, this.nextMonth);
+
+                    document.addEventListener('click', this._handleGlobalClick);
+                    document.addEventListener('keydown', this._handleKeydown);
+
+                    window.addEventListener('scroll', this._handleGlobalScroll, true);
                 },
+
+                unmounted() {
+                    document.removeEventListener('click', this._handleGlobalClick);
+                    document.removeEventListener('keydown', this._handleKeydown);
+
+                    window.removeEventListener('scroll', this._handleGlobalScroll, true);
+                },
+
                 methods: {
+                    //formatting
                     monthName(m) {
                         return new Date(2024, m - 1, 1).toLocaleString("it-IT", { month: "long" });
                     },
+
+                    prettyDay(isoDate) {
+                        const d = new Date(isoDate + 'T00:00:00');
+                        return d.toLocaleString('it-IT', { day: '2-digit', month: 'short' }); // "11 Dic"
+                    },
+
+                    isoToReadable(isoDate) {
+                        const d = new Date(isoDate + 'T00:00:00');
+                        return d.toLocaleDateString();
+                    },
+
                     setMode(m) {
                         this.mode = m;
-                        this.buildDaysList();
+                        this._initRowsAndPools();
                     },
+
                     formatDate(d) {
                         return new Date(d).toLocaleDateString();
                     },
-                    statusClass(status) {
-                        switch (status) {
-                            case 'not_reported': return 'bg-white';
-                            case 'insufficient': return 'bg-red-100 border border-red-300';
-                            case 'reported': return 'bg-green-100';
-                            case 'overtime': return 'bg-green-300';
-                            case 'non_working': return 'bg-gray-100 text-gray-500';
-                            default: return '';
-                        }
-                    },
+
+                    // Calendar status fetcher
                     async fetchMonthStatus(year, month) {
                         const key = `${year}-${String(month).padStart(2,'0')}`;
                         if (this.calendarStatusCache[key]) return this.calendarStatusCache[key];
 
                         try {
                             const res = await axios.get(`/api/timetracking/calendar-status?year=${year}&month=${month}`);
-                            this.calendarStatusCache[key] = res.data;
-                            return res.data;
-                        } catch {
-                            this.calendarStatusCache[key] = [];
-                            return [];
+                            this.calendarStatusCache[key] = res.data || [];
+                            return this.calendarStatusCache[key];
+                        } catch (err) {
+                            const fallback = [];
+                            const first = new Date(year, month - 1, 1);
+                            const last = new Date(year, month, 0);
+                            for (let d = 1; d <= last.getDate(); d++) {
+                                const dt = new Date(year, month - 1, d);
+                                const dow = dt.getDay(); // 0=Sun
+                                const isWeekend = (dow === 0 || dow === 6);
+                                fallback.push({
+                                    date: `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`,
+                                    state: isWeekend ? 'non_working' : 'missing'
+                                });
+                            }
+                            this.calendarStatusCache[key] = fallback;
+                            return fallback;
                         }
                     },
+
                     _cellClassFromState(state) {
-                        switch (state) {
-                            case 'not_reported': return 'border';
-                            case 'insufficient': return 'bg-red-100 border';
-                            case 'reported': return 'bg-green-100 border';
-                            case 'overtime': return 'bg-green-300 border';
-                            case 'non_working': return 'bg-gray-100 border text-gray-400';
-                            default: return 'border';
-                        }
+                        return `cal-cell ${state}`;
                     },
-                    renderCalendar(year, month) {
-                        const statusArray = this.calendarStatusCache[`${year}-${String(month).padStart(2,'0')}`] || [];
+
+                    renderCalendar(year, month, size) {
+                        const key = `${year}-${String(month).padStart(2,'0')}`;
+                        const statusArray = this.calendarStatusCache[key] || [];
                         const first = new Date(year, month - 1, 1);
                         const last = new Date(year, month, 0);
-                        const startDay = first.getDay();
+
+                        let startDay = first.getDay(); // 0..6 (Sun..Sat)
+                        startDay = startDay === 0 ? 6 : startDay - 1; // 0=Mon .. 6=Sun
 
                         let html = '<table class="w-full text-sm">';
-                        html += '<thead><tr class="text-xs text-gray-600"><th>Do</th><th>Lu</th><th>Ma</th><th>Me</th><th>Gi</th><th>Ve</th><th>Sa</th></tr></thead>';
+                        html += '<thead><tr class="text-xs text-gray-600"><th>Lun</th><th>Mar</th><th>Mer</th><th>Gio</th><th>Ven</th><th>Sab</th><th>Dom</th></tr></thead>';
                         html += '<tbody><tr>';
 
                         for (let i = 0; i < startDay; i++) html += '<td></td>';
@@ -176,37 +319,294 @@
                         for (let day = 1; day <= last.getDate(); day++) {
                             const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
                             const st = (statusArray.find(s => s.date === dateStr) || {}).state || 'missing';
-                            const cls = this._cellClassFromState(st);
-                            html += `<td class="${cls} text-center p-1">${day}</td>`;
 
-                            const weekDay = (startDay + day) % 7;
-                            if (weekDay === 0) html += '</tr><tr>';
+                            // decide classe della cella
+                            const cls = this._cellClassFromState(st);
+                            html += `<td class="${cls}">${day}</td>`;
+
+                            const weekDayIndex = (startDay + day) % 7;
+                            if (weekDayIndex === 0) html += '</tr><tr>';
                         }
 
                         html += '</tr></tbody></table>';
                         return html;
                     },
+
+                    //dayslist builder
                     async buildDaysList() {
-                        const today = new Date();
-                        let from, to;
-
-                        if (this.mode === 'month') {
-                            from = new Date(this.activeYear, this.activeMonth - 1, 1);
-                            to = new Date(this.activeYear, this.activeMonth, 0);
-                        } else {
-                            from = new Date(this.activeYear, 0, 1);
-                            to = today;
-                        }
-
                         try {
-                            const daysRes = await axios.get(`/api/timetracking/days-list?mode=${this.mode}`);
+                            const daysRes = await axios.get(`/api/timetracking/timetrackingapi/days-list?mode=${this.mode}`);
                             this.daysList = (daysRes.data || []).sort((a, b) => new Date(b.date) - new Date(a.date));
-                        } catch {
+
+                            // transforma ogni giorno in un oggetto con un array di righe (parte con 1 vuota)
+                            this.daysWithRows = this.daysList.map(d => ({
+                                date: d.date,
+                                totalHours: d.totalHours,
+                                summary: d.summary,
+                                status: d.status,
+                                rows: [ this._newEmptyRow(d.date) ]
+                            }));
+                        } catch (err) {
+                            console.error('buildDaysList error', err);
                             this.daysList = [];
+                            this.daysWithRows = [];
                         }
+                    },
+
+                    //row handler
+                    _newEmptyRow(date) {
+                        return {
+                            _localId: `r${this._localRowCounter++}`,
+                            id: null,            // backend id after save
+                            date: date,
+                            hours: null,
+                            description: '',
+                            activityId: null,
+                            activityText: '',
+                            activitySuggestions: [],
+                            suggestionsActivityVisible: false,
+                            taskId: null,
+                            taskText: '',
+                            taskSuggestions: [],
+                            suggestionsTaskVisible: false,
+                            mode: 0,
+                            saved: false
+                        };
+                    },
+
+                    //TimeEntry validation 
+                    isRowValid(row) {
+                        return (
+                            row.activityId &&
+                            row.taskId &&
+                            row.hours != null &&
+                            row.hours > 0 && 
+                            row.mode !== null && 
+                            row.mode !== undefined
+                        );
+                    },
+
+                    onHoursInput(row) {
+                        // normalize and allow only integer 0..24
+                        if (row.hours === '' || row.hours === null) { row.hours = null; return; }
+
+                        let v = parseInt(row.hours);
+                        if (isNaN(v)) v = null;
+                        if (v !== null) {
+                            if (v < 0) v = 0;
+                            if (v > 24) v = 24;
+                        }
+                        row.hours = v;
+                       
+                    },
+
+                    _autoPersistRow(row) {
+                        if (!this.isRowValid(row)) return;
+
+                        if(row._saving) return;
+                        row._saving = true;
+
+                        const payload = {
+                            ProjectId: row.activityId,
+                            TaskId: row.taskId,
+                            Date: row.date,
+                            HoursWorked: row.hours,
+                            Notes: row.description || null,
+                            Type: row.mode
+                        };
+
+                        if(!row.id) {
+                            axios.post('/api/timeentries', payload)
+                                .then(r => {
+                                    row.id = r.data?.id;
+                                    row.saved = true;
+
+                                    const dayObj = this.daysWithRows.find(d => d.date === row.date);
+                                    if (!dayObj) return;
+
+                                    const isLast = dayObj.rows[dayObj.rows.length - 1]._localId === row._localId;
+                                    if (isLast) {
+                                        dayObj.rows.push(this._newEmptyRow(dayObj.date));
+                                    }
+                                })
+                                .finally(() => row._saving = false)
+                                .catch(err => console.error("Creation error", err));
+                        } else {
+                            axios.put(`/api/timeentries/${row.id}`, payload)
+                                .finally(() => row._saving = false)
+                                .catch(err => console.error("Update error", err));
+                        }
+                    },
+
+                    deleteRow(dayObj, row) {
+                        if (row.id) {
+                            axios.delete(`/api/timeentries/${row.id}`)
+                                .then(()=> {
+                                    const idx = dayObj.rows.findIndex(r => r._localId === row._localId);
+                                    if (idx >= 0) dayObj.rows.splice(idx,1);
+                                    if (dayObj.rows.length === 0) dayObj.rows.push(this._newEmptyRow(dayObj.date));
+                                })
+                                .catch(err => console.error('delete error', err));
+                        } else {
+                            const idx = dayObj.rows.findIndex(r => r._localId === row._localId);
+                            if (idx >= 0) dayObj.rows.splice(idx,1);
+                            if (dayObj.rows.length === 0) dayObj.rows.push(this._newEmptyRow(dayObj.date));
+                        }
+                    },
+
+                    /* -------------- suggestions for activity/task -------------- */
+                    onTypeSearch(row, kind) {
+                        const text = (kind === 'activity') ? row.activityText : row.taskText;
+                        if (!text || text.trim() === '') {
+                            if (kind === 'activity') row.activitySuggestions = []; else row.taskSuggestions = [];
+                            return;
+                        }
+                        const pool = (kind === 'activity') ? this.activitiesPool : this.tasksPool;
+                        const q = text.toLowerCase();
+                        const matches = pool.filter(p => (p.code && p.code.toLowerCase().includes(q)) || (p.name && p.name.toLowerCase().includes(q)));
+                        const limited = matches.slice(0, 8);
+                        if (kind === 'activity') {
+                            row.activitySuggestions = limited;
+                            row.suggestionsActivityVisible = true;
+                        } else {
+                            row.taskSuggestions = limited;
+                            row.suggestionsTaskVisible = true;
+                        }
+                    },
+
+                    openSuggestions(row, kind, evt) {
+
+                        if (kind === 'activity') {
+                            row.suggestionsActivityVisible = true;
+                        } else {
+                            row.suggestionsTaskVisible = true;
+                        }
+
+                        const rect = evt.target.getBoundingClientRect();
+
+                        const style = {
+                            position: 'fixed',
+                            top: `${rect.bottom + 4}px`,
+                            left: `${rect.left}px`,
+                            width: `${rect.width}px`,
+                            zIndex: 100000
+                        };
+
+                        if (kind === 'activity') {
+                            row.activityDropdownStyle = style;
+                            row.suggestionsActivityVisible = true;
+                        } else {
+                            row.taskDropdownStyle = style;
+                            row.suggestionsTaskVisible = true;
+                        }
+
+                        
+                    },
+
+                    closeSuggestionsDebounced(row, kind) {
+                        setTimeout(()=> {
+                            if (kind === 'activity') row.suggestionsActivityVisible = false; else row.suggestionsTaskVisible = false;
+                        }, 150);
+                    },
+
+                    selectSuggestion(row, kind, item) {
+                        if (kind === 'activity') {
+                            row.activityId = item.id;
+                            row.activityText = `${item.code} - ${item.name}`;
+                            row.activitySuggestions = [];
+                            row.suggestionsActivityVisible = false;
+                        } else {
+                            row.taskId = item.id;
+                            row.taskText = `${item.code} - ${item.name}`;
+                            row.taskSuggestions = [];
+                            row.suggestionsTaskVisible = false;
+                        }
+                        this._autoPersistRow(row);
+                    },
+
+                    _handleGlobalClick(e) {
+                        this.daysWithRows.forEach(day => {
+                            day.rows.forEach(row => {
+                                // activity
+                                if (row.suggestionsActivityVisible) {
+                                    const input = e.target.closest('.activity-input');
+                                    const dropdown = e.target.closest('.suggestions-list');
+
+                                    if (!input && !dropdown) {
+                                        row.suggestionsActivityVisible = false;
+                                    }
+                                }
+
+                                // task
+                                if (row.suggestionsTaskVisible) {
+                                    const input = e.target.closest('.task-input');
+                                    const dropdown = e.target.closest('.suggestions-list');
+
+                                    if (!input && !dropdown) {
+                                        row.suggestionsTaskVisible = false;
+                                    }
+                                }
+                            });
+                        });
+                    },
+
+                    _handleGlobalScroll() {
+                        this.closeAllSuggestions();
+                    },
+
+                    _handleKeydown(e) {
+                        if (e.key === 'Escape') {
+                            this.closeAllSuggestions();
+                        }
+                    },
+
+                    closeAllSuggestions() {
+                        this.daysWithRows.forEach(day => {
+                            day.rows.forEach(row => {
+                                row.suggestionsActivityVisible = false;
+                                row.suggestionsTaskVisible = false;
+                            });
+                        });
+                    },
+
+                    /* -------------- pools loader -------------- */
+                    async loadPools() {
+                        console.log("loadPools called");
+                        try {
+                            const [projectsRes, tasksRes] = await Promise.all([
+                                axios.get('/api/TimeTracking/TimeTrackingApi/projects').catch(()=>({data:[]})),
+                                axios.get('/api/timetracking/timetrackingApi/tasks').catch(()=>({data:[]})),
+                            ]);
+
+                            console.log("Projects:", projectsRes.data);
+                            console.log("Tasks:", tasksRes.data);
+
+                            this.activitiesPool = (projectsRes.data || []).map(p => ({
+                                id: p.id,
+                                code: p.code,
+                                name: p.name
+                            }));
+                            this.tasksPool = (tasksRes.data || []).map(t => ({
+                                id: t.id,
+                                code: t.code,
+                                name: t.name
+                            }));
+
+                        } catch (err) {
+                            this.activitiesPool = [];
+                            this.tasksPool = [];
+                            console.debug('pools load error', err);
+                        }
+                    },
+
+                    /* init helper */
+                    async _initRowsAndPools() {
+                        await this.buildDaysList();
+                        await this.loadPools();
                     }
                 }
             }).mount('#rendicontazione-app');
         })();
     </script>
 }
+

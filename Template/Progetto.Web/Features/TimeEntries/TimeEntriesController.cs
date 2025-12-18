@@ -9,6 +9,8 @@ using System.Collections;
 using Template.Services.Shared.TimeTracking.DTOs;
 using System.Collections.Generic;
 using Template.Infrastructure;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Progetto.Web.Features.TimeEntries
 {
@@ -19,19 +21,28 @@ namespace Progetto.Web.Features.TimeEntries
         private readonly TemplateDbContext _context;
         private readonly ICurrentUserService _currentUser;
 
-        public TimeEntriesController(TemplateDbContext context, ICurrentUserService currentUser )
+        public TimeEntriesController(TemplateDbContext context, ICurrentUserService currentUser)
         {
             _context = context;
             _currentUser = currentUser;
         }
 
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAll()
+        {
+            var items = await _context.TimeEntries.ToListAsync();
+
+            return Ok(items);
+        }
+
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TimeEntryDto>>> GetTimeEntries([FromQuery] DateTime? date, [FromQuery] string month, [FromQuery] Guid? projectId)
+        public async Task<ActionResult<IEnumerable<TimeEntryDto>>> GetTimeEntries([FromQuery] DateTime? date, [FromQuery] string month, [FromQuery] Guid? projectId, [FromQuery] Guid? taskId)
         {
             var userId = _currentUser.UserId;
 
             var query = _context.TimeEntries
                 .Include(t => t.Project)
+                .Include(t => t.Task)
                 .Where(t => t.UserId == userId)
                 .AsQueryable();
 
@@ -47,13 +58,18 @@ namespace Progetto.Web.Features.TimeEntries
             if (projectId.HasValue)
                 query = query.Where(t => t.ProjectId == projectId.Value);
 
+            if (taskId.HasValue)
+                query = query.Where(t => t.TaskId == taskId.Value);
+
             var result = await query
                 .OrderBy(t => t.Date)
                 .Select(t => new TimeEntryDto
                 {
                     Id = t.Id,
                     ProjectId = t.ProjectId,
-                    ProjectName = t.Project.Name,
+                    ProjectName = t.Project != null ? t.Project.Name : null,
+                    TaskId = t.TaskId,
+                    TaskName = t.Task != null ? t.Task.Name : null,
                     Date = t.Date,
                     HoursWorked = t.HoursWorked,
                     Notes = t.Notes,
@@ -65,15 +81,24 @@ namespace Progetto.Web.Features.TimeEntries
             return Ok(result);
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult> Create(TimeEntryCreateDto dto)
         {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var userId = _currentUser.UserId;
+
+            if (userId == Guid.Empty)
+                return Unauthorized();
 
             var entry = new TimeEntry
             {
                 UserId = userId,
                 ProjectId = dto.ProjectId,
+                TaskId = dto.TaskId,
                 Date = dto.Date.Date,
                 HoursWorked = dto.HoursWorked,
                 Notes = dto.Notes,
@@ -83,7 +108,7 @@ namespace Progetto.Web.Features.TimeEntries
             _context.TimeEntries.Add(entry);
             await _context.SaveChangesAsync();
 
-            return Ok();
+            return Ok(new { id = entry.Id });
         }
 
         [HttpPut("{id}")]
@@ -97,13 +122,17 @@ namespace Progetto.Web.Features.TimeEntries
 
             if (entry == null) return NotFound();
 
+
+            entry.ProjectId = dto.ProjectId;
+            entry.TaskId = dto.TaskId;
+            entry.Date = dto.Date.Date;
             entry.HoursWorked = dto.HoursWorked;
             entry.Notes = dto.Notes;
             entry.Type = dto.Type;
 
             await _context.SaveChangesAsync();
 
-            return Ok();
+            return Ok(new { id = entry.Id });
         }
 
         [HttpDelete("{id}")]
