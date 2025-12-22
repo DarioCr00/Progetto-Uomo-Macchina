@@ -12122,13 +12122,15 @@ textarea.form-control-lg {
 }
 
 .days-list-card {
-  background: #343A40;
+  background-color: #343A40;
   margin: 0 45px;
   padding: 20px 24px;
   border-radius: 15px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   color: white;
   width: calc(100% - 90px);
+  min-height: 700px;
+  height: auto;
 }
 
 .days-list-card table {
@@ -12266,4 +12268,22 @@ textarea.form-control-lg {
   font-size: 12px;
   padding: 8px;
   color: #666;
+}
+
+tr.row-disabled .btn-delete {
+  background-color: #1f2327 !important;
+  pointer-events: none;
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+tr.row-disabled td {
+  background-color: #1f2327 !important;
+  color: #9ca3af !important;
+}
+
+tr.row-disabled input,
+tr.row-disabled select {
+  pointer-events: none;
+  opacity: 0.5;
 }

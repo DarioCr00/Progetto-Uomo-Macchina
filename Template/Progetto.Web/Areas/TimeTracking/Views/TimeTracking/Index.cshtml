@@ -70,7 +70,11 @@
                     <template v-for="(dayObj, di) in daysWithRows" :key="dayObj.date">
                         <!-- first row of the day (and subsequent rows) -->
                         <tr v-for="(row, ri) in dayObj.rows" :key="row._localId"
-                            :class="['transition', row.saved ? 'row-saved' : 'row-unsaved']">
+                            :class="[
+                                'transition',
+                                row.saved ? 'row-saved' : 'row-unsaved',
+                                row.disabled ? 'row-disabled' : ''
+                            ]">
                             <!-- Giorno: only show on first row of day; otherwise empty cell to align -->
                             <td v-if="ri === 0"
                                 class="px-3 py-2 align-top text-white" 
@@ -81,7 +85,7 @@
 
                             <!-- Ore: number input, solo interi 0–24 -->
                             <td class="px-2 py-2 text-center flex-column align-items-center gap-2 justify-center">
-                                <input type="number" class="hours-input" v-model.number="row.hours"
+                                <input type="number" class="hours-input" v-model.number="row.hours" :disabled="row.disabled"
                                 @@input ="onHoursInput(row)"
                                 @@blur="_autoPersistRow(row)"
                                        min="0" max="24" step="1"
@@ -90,13 +94,13 @@
 
                             <!-- Descrizione -->
                             <td class="px-3 py-2">
-                                <input type="text" class="text-input" v-model="row.description" @@blur="_autoPersistRow(row)" placeholder="Descrizione breve dell'attività svolta" />
+                                <input type="text" class="text-input" v-model="row.description" :disabled="row.disabled" @@blur="_autoPersistRow(row)" placeholder="Descrizione breve dell'attività svolta" />
                             </td>
 
                             <!-- Attività: searchable dropdown -->
                             <td class="px-3 py-2 relative">
                                 <input type="text" class="text-input"
-                                       v-model="row.activityText"
+                                       v-model="row.activityText" :disabled="row.disabled"
                                 @@input ="onTypeSearch(row,'activity', $event)"
                                 @@focus ="openSuggestions(row,'activity', $event)"
                                        placeholder="Cerca codice attività"
@@ -124,7 +128,7 @@
                             <td class="px-3 py-2 relative">
                                 <input type="text"
                                        class="text-input task-input"
-                                       v-model="row.taskText"
+                                       v-model="row.taskText" :disabled="row.disabled"
                                        @@input="onTypeSearch(row,'task', $event)"
                                        @@focus="openSuggestions(row,'task', $event)"
                                        placeholder="Cerca codice task"
@@ -152,15 +156,15 @@
 
                             <!-- Modalità: select (WorkType) -->
                             <td class="px-3 py-2">
-                                <select v-model="row.mode" class="select-input" @@change="_autoPersistRow(row)">
+                                <select v-model="row.mode" class="select-input" :disabled="row.disabled" @@change="_autoPersistRow(row)">
                                     <option v-for="m in workTypes" :value="m.value">{{ m.label }}</option>
                                 </select>
                             </td>
 
                             <!-- Azioni: elimina -->
                             <td class="px-2 py-2 text-center">
-                                <button class="btn-delete" v-on:click.prevent ="deleteRow(dayObj, row)">
-                                    🗑
+                                <button class="btn-delete" :disabled="row.disabled" v-on:click.prevent="deleteRow(dayObj, row)">
+                                    <i class="fa-solid fa-trash"></i>
                                 </button>
                             </td>
                         </tr>
@@ -332,6 +336,34 @@
                         return html;
                     },
 
+                    isWeekend(isoDate) {
+                        const d = new Date(isoDate + 'T00:00:00');
+                        const day = d.getDay();
+                        return day === 0 || day === 6; //qui domenica è ancora vista come giorno 0
+                    },
+
+                    isHoliday(isoDate) { //per il momento hardcoded
+                        const holidays = [
+                            '01-01', '06-01',
+                            '25-04',
+                            '01-05',
+                            '02-06',
+                            '15-08',
+                            '01-11',
+                            '08-12',
+                            '25-12',
+                            '26-12'
+                        ];
+
+                        const d = new Date(isoDate + 'T00:00:00');
+                        const key = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}`;
+                        return holidays.includes(key);
+                    },
+
+                    isNonWorkingDay(isoDate) {
+                        return this.isWeekend(isoDate) || this.isHoliday(isoDate);
+                    },
+
                     //dayslist builder
                     async buildDaysList() {
                         try {
@@ -355,12 +387,15 @@
 
                     //row handler
                     _newEmptyRow(date) {
+
+                        const disabled = this.isNonWorkingDay(date);
+
                         return {
                             _localId: `r${this._localRowCounter++}`,
                             id: null,            // backend id after save
                             date: date,
-                            hours: null,
-                            description: '',
+                            hours: disabled ? null : null,
+                            description: disabled ? '' : '',
                             activityId: null,
                             activityText: '',
                             activitySuggestions: [],
@@ -370,7 +405,9 @@
                             taskSuggestions: [],
                             suggestionsTaskVisible: false,
                             mode: 0,
-                            saved: false
+                            saved: false,
+
+                            disabled: disabled
                         };
                     },
 
@@ -402,6 +439,8 @@
 
                     _autoPersistRow(row) {
                         if (!this.isRowValid(row)) return;
+
+                        if(row.disabled) return;
 
                         if(row._saving) return;
                         row._saving = true;
@@ -439,6 +478,8 @@
                     },
 
                     deleteRow(dayObj, row) {
+                        if (row.disabled) return; //prevenzione della chiamata per i giorni non lavorativi
+
                         if (row.id) {
                             axios.delete(`/api/timeentries/${row.id}`)
                                 .then(()=> {
