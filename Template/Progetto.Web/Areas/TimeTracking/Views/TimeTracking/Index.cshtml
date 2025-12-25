@@ -9,17 +9,17 @@
     <div class="calendars-row mb-8">
         <div class="calendar-card medium">
             <h4>{{ monthName(prevMonth) }} {{ prevYear }}</h4>
-            <div class="calendar" v-html="renderCalendar(prevYear, prevMonth, 'medium')"></div>
+            <div class="calendar" :key="'p'+calendarRenderTick" v-html="renderCalendar(prevYear, prevMonth, 'medium')"></div>
         </div>
 
         <div class="calendar-card large">
             <h3>{{ monthName(activeMonth) }} {{ activeYear }}</h3>
-            <div class="calendar large" v-html="renderCalendar(activeYear, activeMonth, 'large')"></div>
+            <div class="calendar large" :key="'a'+calendarRenderTick" v-html="renderCalendar(activeYear, activeMonth, 'large')"></div>
         </div>
 
         <div class="calendar-card medium">
             <h4>{{ monthName(nextMonth) }} {{ nextYear }}</h4>
-            <div class="calendar" v-html="renderCalendar(nextYear, nextMonth, 'medium')"></div>
+            <div class="calendar" :key="'n'+calendarRenderTick" v-html="renderCalendar(nextYear, nextMonth, 'medium')"></div>
         </div>
     </div>
 
@@ -87,14 +87,14 @@
                             <td class="px-2 py-2 text-center flex-column align-items-center gap-2 justify-center">
                                 <input type="number" class="hours-input" v-model.number="row.hours" :disabled="row.disabled"
                                 @@input ="onHoursInput(row)"
-                                @@blur="_autoPersistRow(row)"
+                                @@blur="autoPersistRow(row)"
                                        min="0" max="24" step="1"
                                        :placeholder="0" />
                             </td>
 
                             <!-- Descrizione -->
                             <td class="px-3 py-2">
-                                <input type="text" class="text-input" v-model="row.description" :disabled="row.disabled" @@blur="_autoPersistRow(row)" placeholder="Descrizione breve dell'attività svolta" />
+                                <input type="text" class="text-input" v-model="row.description" :disabled="row.disabled" @@blur="autoPersistRow(row)" placeholder="Descrizione breve dell'attività svolta" />
                             </td>
 
                             <!-- Attività: searchable dropdown -->
@@ -156,7 +156,7 @@
 
                             <!-- Modalità: select (WorkType) -->
                             <td class="px-3 py-2">
-                                <select v-model="row.mode" class="select-input" :disabled="row.disabled" @@change="_autoPersistRow(row)">
+                                <select v-model="row.mode" class="select-input" :disabled="row.disabled" onchange="autoPersistRow(row)">
                                     <option v-for="m in workTypes" :value="m.value">{{ m.label }}</option>
                                 </select>
                             </td>
@@ -198,6 +198,8 @@
 
                         // [{ date: "YYYY-MM-DD", totalHours, summary, status, rows: [ { _localId, id, date, hours, description, activityId, activityText, ... } ] }]
                         daysWithRows: [],
+
+                        calendarRenderTick: 0,
 
                         calendarStatusCache: {},
 
@@ -280,7 +282,7 @@
                         if (this.calendarStatusCache[key]) return this.calendarStatusCache[key];
 
                         try {
-                            const res = await axios.get(`/api/timetracking/calendar-status?year=${year}&month=${month}`);
+                            const res = await axios.get(`/api/timetracking/timetrackingapi/calendar-status?year=${year}&month=${month}`);
                             this.calendarStatusCache[key] = res.data || [];
                             return this.calendarStatusCache[key];
                         } catch (err) {
@@ -336,6 +338,26 @@
                         return html;
                     },
 
+                    async refreshCalendarStatus() {
+
+                        const monthsToUpdate = [
+                            { y: this.prevYear, m: this.prevMonth },
+                            { y: this.activeYear, m: this.activeMonth},
+                            { y: this.nextYear, m: this.nextMonth }
+                        ];
+
+                        for (const { y, m } of monthsToUpdate) {
+                            const key = `${y}-${String(m).padStart(2,'0')}`;
+
+                            try {
+                                const { data } =  await axios.get(`/api/timetracking/timetrackingapi/calendar-status?year=${y}&month=${m}`);
+                                this.calendarStatusCache[key] = data;
+                            } catch {
+                                this.calendarStatusCache[key] = [];
+                            }
+                        }                       
+                    },
+
                     isWeekend(isoDate) {
                         const d = new Date(isoDate + 'T00:00:00');
                         const day = d.getDay();
@@ -371,18 +393,51 @@
                             this.daysList = (daysRes.data || []).sort((a, b) => new Date(b.date) - new Date(a.date));
 
                             // transforma ogni giorno in un oggetto con un array di righe (parte con 1 vuota)
-                            this.daysWithRows = this.daysList.map(d => ({
-                                date: d.date,
-                                totalHours: d.totalHours,
-                                summary: d.summary,
-                                status: d.status,
-                                rows: [ this._newEmptyRow(d.date) ]
-                            }));
+                            this.daysWithRows = this.daysList.map(d => {
+                                let rows = [];
+
+                                // se ci sono entries vengono tutte convertite 
+                                if (d.entries && d.entries.length > 0) {
+                                    rows = d.entries.map(e => this._entryToRow(d.date, e));
+                                }
+
+                                // aggiungo comunque una riga vuota in fondo
+                                rows.push(this._newEmptyRow(d.date));
+
+                                return {
+                                    date: d.date,
+                                    totalHours: d.totalHours,
+                                    summary: d.summary,
+                                    status: d.status,
+                                    rows
+                                };
+                            });
                         } catch (err) {
                             console.error('buildDaysList error', err);
                             this.daysList = [];
                             this.daysWithRows = [];
                         }
+                    },
+
+                    _entryToRow(date, e) {
+                        return {
+                             _localId: `r${this._localRowCounter++}`,
+                            id: e.id,
+                            date: date,
+                            hours: e.hours ?? null,
+                            description: e.description ?? "",
+                            activityId: e.projectId,
+                            activityText: `${e.projectCode || ''} - ${e.project || ''}`,
+                            activitySuggestions: [],
+                            suggestionsActivityVisible: false,
+                            taskId: e.taskId,
+                            taskText: `${e.taskCode || ''} - ${e.task || ''}`,
+                            taskSuggestions: [],
+                            suggestionsTaskVisible: false,
+                            mode: e.type ?? 0,
+                            saved: true,
+                            disabled: this.isNonWorkingDay(date)
+                        };
                     },
 
                     //row handler
@@ -437,7 +492,7 @@
                        
                     },
 
-                    _autoPersistRow(row) {
+                    autoPersistRow(row) {
                         if (!this.isRowValid(row)) return;
 
                         if(row.disabled) return;
@@ -460,6 +515,9 @@
                                     row.id = r.data?.id;
                                     row.saved = true;
 
+                                    this.refreshCalendarStatus();
+                                    this.calendarRenderTick++;
+
                                     const dayObj = this.daysWithRows.find(d => d.date === row.date);
                                     if (!dayObj) return;
 
@@ -472,6 +530,10 @@
                                 .catch(err => console.error("Creation error", err));
                         } else {
                             axios.put(`/api/timeentries/${row.id}`, payload)
+                                .then(() => {
+                                    this.refreshCalendarStatus();
+                                    this.calendarRenderTick++;
+                                })
                                 .finally(() => row._saving = false)
                                 .catch(err => console.error("Update error", err));
                         }
@@ -486,6 +548,9 @@
                                     const idx = dayObj.rows.findIndex(r => r._localId === row._localId);
                                     if (idx >= 0) dayObj.rows.splice(idx,1);
                                     if (dayObj.rows.length === 0) dayObj.rows.push(this._newEmptyRow(dayObj.date));
+
+                                    this.refreshCalendarStatus();
+                                    this.calendarRenderTick++;
                                 })
                                 .catch(err => console.error('delete error', err));
                         } else {
@@ -562,7 +627,7 @@
                             row.taskSuggestions = [];
                             row.suggestionsTaskVisible = false;
                         }
-                        this._autoPersistRow(row);
+                        this.autoPersistRow(row);
                     },
 
                     _handleGlobalClick(e) {

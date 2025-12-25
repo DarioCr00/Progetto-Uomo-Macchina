@@ -66,7 +66,7 @@ namespace Template.Infrastructure
                         UserId = user.Id,
                         ProjectId = project.Id,
                         TaskId = task.Id,
-                        Date = DateTime.Today,
+                        Date = new DateTime(2025, 12, 15),
                         HoursWorked = 8m,
                         Notes = "Lavoro di prova",
                         Type = WorkType.Normal,
