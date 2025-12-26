@@ -17,6 +17,26 @@
     cursor: pointer;
 }
 
+.navbar-left-group {
+    gap: 30px;
+    white-space: nowrap;
+}
+
+.navbar-item-static {
+    font-size: 1.1rem;
+    color: white;
+    text-decoration: none;
+}
+
+.navbar-item-static:hover {
+    color: #f0f0f0;
+}
+
+.navbar-left-group a,
+.navbar-left-group span {
+    white-space: nowrap;
+}
+
 /* LINK NELLA NAVBAR */
 .custom-navbar .nav-link {
     color: white !important;

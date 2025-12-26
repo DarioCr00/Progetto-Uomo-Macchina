@@ -11,6 +11,7 @@ namespace Template.Infrastructure
     {
         public static async Task Seed(TemplateDbContext context)
         {
+            context.Database.EnsureDeleted();
             context.Database.EnsureCreated();
 
             //mantiene il seeding degli utenti già esistenti se presente

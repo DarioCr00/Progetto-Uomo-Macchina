@@ -133,8 +133,11 @@ namespace Progetto.Web
                 // ROUTING PER HUB
                 endpoints.MapHub<TemplateHub>("/templateHub");
 
-                endpoints.MapAreaControllerRoute("Example", "Example", "Example/{controller=Users}/{action=Index}/{id?}");
                 endpoints.MapAreaControllerRoute("TimeTracking", "TimeTracking", "TimeTracking/{controller=TimeTracking}/{action=Index}/{id?}");
+                endpoints.MapAreaControllerRoute("Administration", "Administration", "Administration/{controller=Admin}/{action=Index}/{id?}");
+                endpoints.MapAreaControllerRoute("Projects", "Projects", "Projects/{controller=Projects}/{action=Index}/{id?}");
+
+                endpoints.MapAreaControllerRoute("Example", "Example", "Example/{controller=Users}/{action=Index}/{id?}");    
                 endpoints.MapControllerRoute("default", "{controller=Login}/{action=Login}");
             });
         }

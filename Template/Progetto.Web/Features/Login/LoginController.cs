@@ -32,7 +32,8 @@ namespace Progetto.Web.Features.Login
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, utente.Id.ToString()),
-                new Claim(ClaimTypes.Email, utente.Email)
+                new Claim(ClaimTypes.Email, utente.Email),
+                new Claim(ClaimTypes.Role, utente.Role)
             };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -46,7 +47,7 @@ namespace Progetto.Web.Features.Login
             if (string.IsNullOrWhiteSpace(returnUrl) == false)
                 return Redirect(returnUrl);
 
-            return RedirectToAction(MVC.Example.Users.Index());
+            return RedirectToAction("Index", "TimeTracking", new { area = "TimeTracking" });
         }
 
         [HttpGet]
@@ -57,7 +58,7 @@ namespace Progetto.Web.Features.Login
                 if (string.IsNullOrWhiteSpace(returnUrl) == false)
                     return Redirect(returnUrl);
 
-                return RedirectToAction(MVC.Example.Users.Index());
+                return RedirectToAction("Index", "TimeTracking", new { area = "TimeTracking" });
             }
 
             var model = new LoginViewModel

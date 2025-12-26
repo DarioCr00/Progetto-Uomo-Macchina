@@ -5,6 +5,8 @@
     var version = System.Reflection.Assembly.GetAssembly(typeof(Startup)).GetName().Version;
 
     var identitaCorrente = (Progetto.Web.Areas.IdentitaViewModel)ViewData[Progetto.Web.Areas.IdentitaViewModel.VIEWDATA_IDENTITACORRENTE_KEY];
+
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
 }
 @section metas{
     @RenderSection("metas", false)
@@ -17,10 +19,21 @@
         <nav class="navbar navbar-expand-lg custom-navbar">
             <div class="container-fluid">
 
-                <!-- TITOLO DELLA WEBAPP -->
+                @* <!-- TITOLO DELLA WEBAPP -->
                 <a class="navbar-brand navbar-title" href="/">
                     @ViewData["Title"]
-                </a>
+                </a> *@
+
+                <div class="d-flex align-items-center navbar-left-group">
+
+                    <a class="nav-link @(currentController == "TimeTracking" ? "fw-bold" : "")" href="/TimeTracking">WebApp Rendicontazione</a>
+
+                    @if (User.IsInRole("Admin") || User.IsInRole("TeamLeader"))
+                    {
+                        <a class="nav-link @(currentController == "Admin" ? "fw-bold" : "")" href="/Administration">Amministrazione</a>
+                        <a class="nav-link @(currentController == "Projects" ? "fw-bold" : "")" href="/Projects">Creazione/Assegnazione Progetto</a>
+                    }
+                </div>
 
                 <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse"
                         data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
