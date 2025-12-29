@@ -12283,6 +12283,20 @@ textarea.form-control-lg {
   color: #ffdddd;
 }
 
+#applyFiltersBtn {
+  background-color: #454D55;
+  border-color: #454D55;
+  color: white;
+  height: auto;
+  padding: 0.375rem 0.75rem;
+}
+
+/* opzionale: hover più chiaro */
+#applyFiltersBtn:hover {
+  background-color: #495057;
+  border-color: #495057;
+}
+
 /* small helpers */
 .no-results {
   font-size: 12px;
@@ -12306,4 +12320,16 @@ tr.row-disabled input,
 tr.row-disabled select {
   pointer-events: none;
   opacity: 0.5;
+}
+
+.col-md-custom {
+  flex: 0 0 auto;
+  width: 22.9%; /* 2.5 col */
+}
+
+.col-md-mini-custom {
+  flex: 0 0 auto;
+  width: 5%;
+  justify-content: end;
+  align-items: end;
 }

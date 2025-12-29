@@ -156,7 +156,7 @@
 
                             <!-- Modalità: select (WorkType) -->
                             <td class="px-3 py-2">
-                                <select v-model="row.mode" class="select-input" :disabled="row.disabled" onchange="autoPersistRow(row)">
+                                <select v-model="row.mode" class="select-input" :disabled="row.disabled" @@blur="autoPersistRow(row)">
                                     <option v-for="m in workTypes" :value="m.value">{{ m.label }}</option>
                                 </select>
                             </td>
