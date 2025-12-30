@@ -22,6 +22,7 @@ namespace Template.Services
         public DbSet<TimeEntry> TimeEntries { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<TaskItem> Tasks { get; set; }
+        public DbSet<TaskAssignment> TaskAssignments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,6 +31,7 @@ namespace Template.Services
             modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique(false);
             modelBuilder.Entity<TimeEntry>().HasIndex(t => new { t.UserId, t.Date });
             modelBuilder.Entity<Project>().HasIndex(p => p.Code).IsUnique();
+            modelBuilder.Entity<TaskAssignment>().HasKey(ta => new { ta.TaskId, ta.UserId });
         }
     }
 }

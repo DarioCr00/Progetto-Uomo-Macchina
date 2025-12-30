@@ -15,6 +15,7 @@ namespace Template.Services.Shared.TimeTracking
         [Required]
         [StringLength(50)]
         public string Code { get; set; }
+        public Guid CreatedByUserId { get; set; }
 
         public ICollection<TimeEntry> TimeEntries { get; set; }
     }
