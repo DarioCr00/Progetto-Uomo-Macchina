@@ -11855,6 +11855,63 @@ textarea.form-control-lg {
     display: none !important;
   }
 }
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+}
+
+.login-card {
+  background-color: #454D55;
+  color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+.login-card label {
+  color: white;
+}
+
+.login-card .form-control {
+  background-color: #343A40;
+  color: white;
+  border: 1px solid #555;
+}
+
+.login-card .form-control:focus {
+  background-color: #343A40;
+  color: white;
+  border-color: #17C3B2;
+  box-shadow: none;
+}
+
+.btn-login-custom {
+  background-color: #17C3B2;
+  border-color: #17C3B2;
+  border-radius: 5%;
+  color: #fff;
+  font-size: 0.9rem;
+  padding: 0.45rem 1rem;
+  width: auto;
+  display: inline-block;
+}
+
+.btn-login-custom:hover {
+  background-color: #12a99a;
+  border-color: #12a99a;
+}
+
+/* Switch custom color */
+.form-check-input:checked {
+  background-color: #17C3B2;
+  border-color: #17C3B2;
+}
+
 .custom-navbar {
   background-color: #374455 !important;
   padding: 0.6rem 1rem;
