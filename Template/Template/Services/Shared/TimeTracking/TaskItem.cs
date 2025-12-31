@@ -18,6 +18,8 @@ namespace Template.Services.Shared.TimeTracking
 
         [Required]
         public string Name { get; set; }
+        public Guid ProjectId { get; set; }
+        public Project Project { get; set; }
         public Guid CreatedByUserId { get; set; }
     }
 }

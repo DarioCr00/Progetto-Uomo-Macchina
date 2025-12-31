@@ -101,7 +101,7 @@ namespace Progetto.Web.Features.WorkManagement
             });
         }
 
-        [HttpPost("addTask")]
+        [HttpPost("projects/{projectId:guid}/addTask")]
         public async Task<IActionResult> CreateTask([FromBody] CreateTaskRequest req)
         {
             if (!ModelState.IsValid)
@@ -154,7 +154,7 @@ namespace Progetto.Web.Features.WorkManagement
             });
         }
 
-        [HttpPut("editTask/{id:guid}")]
+        [HttpPut("projects/{projectId:guid}/editTask/{id:guid}")]
         public async Task<IActionResult> EditTask(Guid id, [FromBody] EditTaskRequest req)
         {
             if (id != req.Id)
@@ -173,6 +173,7 @@ namespace Progetto.Web.Features.WorkManagement
 
             task.Name = req.Name;
             task.Code = req.Code;
+            task.ProjectId = req.ProjectId;
 
             //recupero delle assegnazioni esistenti
             var existingAssignments = await _context.TaskAssignments
@@ -218,7 +219,7 @@ namespace Progetto.Web.Features.WorkManagement
             }); 
         }
 
-        [HttpDelete("deleteTask/{id:guid}")]
+        [HttpDelete("projects/{projectId:guid}/deleteTask/{id:guid}")]
         public async Task<IActionResult> DeleteTask(Guid id)
         {
             var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id);

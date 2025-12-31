@@ -17,6 +17,7 @@ namespace Template.Services.Shared.TimeTracking
         public string Code { get; set; }
         public Guid CreatedByUserId { get; set; }
 
+        public List<TaskItem> Tasks { get; set; } = new();
         public ICollection<TimeEntry> TimeEntries { get; set; }
     }
 }

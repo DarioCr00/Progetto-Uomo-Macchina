@@ -42,11 +42,15 @@ namespace Template.Infrastructure
 
             if(!context.Tasks.Any())
             {
-                context.Tasks.AddRange(
-                    new TaskItem { Id= Guid.NewGuid(), Code = "TSK001", Name = "Analisi tecnica"},
-                    new TaskItem { Id = Guid.NewGuid(), Code = "TSK002", Name = "Sviluppo API" },
-                    new TaskItem { Id = Guid.NewGuid(), Code = "TSK003", Name = "Testing" }
-                );
+                var projects = context.Projects.ToList();
+                if (projects.Count >= 2)
+                {
+                    context.Tasks.AddRange(
+                    new TaskItem { Id = Guid.NewGuid(), Code = "TSK001", Name = "Analisi tecnica", ProjectId = projects[0].Id },
+                    new TaskItem { Id = Guid.NewGuid(), Code = "TSK002", Name = "Sviluppo API", ProjectId = projects[0].Id },
+                    new TaskItem { Id = Guid.NewGuid(), Code = "TSK003", Name = "Testing", ProjectId = projects[1].Id }
+                    );
+                }
 
                 await context.SaveChangesAsync();
             }
