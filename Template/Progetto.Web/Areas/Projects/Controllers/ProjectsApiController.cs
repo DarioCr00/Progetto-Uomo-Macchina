@@ -37,7 +37,8 @@ namespace Progetto.Web.Areas.Projects.Controllers
                         {
                             Id = t.Id,
                             Name = t.Name,
-                            Code = t.Code
+                            Code = t.Code,
+                            ProjectId = t.ProjectId
                         })
                         .ToList()
                 })

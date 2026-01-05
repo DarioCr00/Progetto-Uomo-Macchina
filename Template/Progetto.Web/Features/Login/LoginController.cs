@@ -27,18 +27,19 @@ namespace Progetto.Web.Features.Login
             _sharedLocalizer = sharedLocalizer;
         }
 
-        private ActionResult LoginAndRedirect(UserDetailDTO utente, string returnUrl, bool rememberMe)
+        private async Task<ActionResult> LoginAndRedirect(UserDetailDTO utente, string returnUrl, bool rememberMe)
         {
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, utente.Id.ToString()),
                 new Claim(ClaimTypes.Email, utente.Email),
+                new Claim(ClaimTypes.Name, $"{utente.FirstName} {utente.LastName}"),
                 new Claim(ClaimTypes.Role, utente.Role)
             };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-            HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), new AuthenticationProperties
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), new AuthenticationProperties
             {
                 ExpiresUtc = (rememberMe) ? DateTimeOffset.UtcNow.AddMonths(3) : null,
                 IsPersistent = rememberMe,
@@ -82,7 +83,7 @@ namespace Progetto.Web.Features.Login
                         Password = model.Password,
                     });
 
-                    return LoginAndRedirect(utente, model.ReturnUrl, model.RememberMe);
+                    return await LoginAndRedirect(utente, model.ReturnUrl, model.RememberMe);
                 }
                 catch (LoginException e)
                 {

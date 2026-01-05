@@ -1,4 +1,543 @@
 ﻿@{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Creazione/ Assegnazione Progetto";
+
+    var identitaCorrente = (Progetto.Web.Areas.IdentitaViewModel)ViewData[Progetto.Web.Areas.IdentitaViewModel.VIEWDATA_IDENTITACORRENTE_KEY];
+}
+
+<div class="main-container">
+    <div class="top-bar">
+        <button id="btnOpenCreateProject" class="btn-create">
+            + Aggiungi Attività
+        </button>
+    </div>
+    <div class="bottom-bar">
+        <div id="projectListContainer" class="project-list">
+
+        </div>
+    </div>
+</div>
+
+<!-- Overlay -->
+<div id="overlay" class="overlay hidden">
+    <div class="project-card">
+        <h2 id="overlayTitle"></h2>
+
+        <div id="overlayFields"></div>
+
+        @* <div>
+            <label>Nome Attività</label>
+            <input id="projName" type="text" class="input" />
+        </div>
+
+        <div class="two-cols">
+            <div class="form-group">
+                <label>Creato da</label>
+                <div class="fake-input">
+                    <img src="@identitaCorrente.GravatarUrl" alt="Avatar" class="avatar" />
+                    <span>@User.Identity.Name</span>
+                </div> 
+            </div>
+            <div>
+                <label>Codice attività</label>
+                <input id="projCode" type="text" class="input" placeholder="Es: C0001" />
+                <small id="codeError" class="error"></small>
+            </div>
+        </div> *@
+
+        <div class="btn-row">
+            <button id="btnCancel" class="btn cancel">Annulla</button>
+            <button id="btnConfirm" class="btn confirm disabled" disabled>Conferma</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script>
+        const overlay = document.getElementById("overlay");
+        const btnOpen = document.getElementById("btnOpenCreateProject");
+        const btnCancel = document.getElementById("btnCancel");
+        const btnConfirm = document.getElementById("btnConfirm");
+
+        // Regex per CODICE: Lettera maiuscola + 4 cifre (Es: C0001) / Lettere maiuscole + 3 cifre (Es: TSK001)
+        const projectCodeRegex = /^[A-Z][0-9]{4}$/;
+        const taskCodeRegex = /^TSK[0-9]{3}$/;
+        
+        btnOpen.addEventListener("click", () => {
+            //overlay.classList.remove("hidden");
+            openOverlay("createProject");
+        });
+
+        btnCancel.addEventListener("click", () => {
+            closeOverlay();
+        });
+
+        function closeOverlay() {
+            overlay.classList.add("hidden");
+            disableConfirm();
+        }
+
+        function enableConfirm() {
+            btnConfirm.disabled = false;
+            btnConfirm.classList.remove("disabled");
+        }
+
+        function disableConfirm() {
+            btnConfirm.disabled = true;
+            btnConfirm.classList.add("disabled");
+        }
+
+        let activeRegex = null;
+
+        function attachValidation() {
+
+            const inputName = document.getElementById("inputName");
+            const inputCode = document.getElementById("inputCode");
+            const codeError = document.getElementById("codeError");
+
+            if (!inputName || !inputCode) return;
+
+            function validate() {
+                let valid = true;
+
+                // Nome obbligatorio
+                if (!inputName.value.trim())
+                    valid = false;
+
+                // Se il campo codice NON è vuoto → valida
+                if (inputCode.value.trim().length > 0) {
+                    if (!activeRegex.test(inputCode.value)) {
+                        valid = false;
+                        if (codeError)
+                            codeError.textContent = 
+                                modalMode.includes("Project")
+                                ? "Formato non valido. Es: C0001"
+                                : "Formato non valido. Es: TSK001";
+                    } else {
+                        if (codeError)
+                            codeError.textContent = "";
+                    }
+                } else {
+                    // Campo vuoto → nessun errore
+                    if (codeError)
+                        codeError.textContent = "";
+                    valid = false; // comunque deve essere richiesto
+                }
+
+                valid ? enableConfirm() : disableConfirm();
+            }
+
+            inputName.addEventListener("input", validate);
+            inputCode.addEventListener("input", validate);
+
+        }
+
+        let assignedUsers = [];
+
+                function attachAssignedUsers(data = {}) {
+            assignedUsers = data.assignedUsers ?? [];
+
+            const container = document.getElementById("assignedUsersContainer");
+            const input = document.getElementById("assignedUserInput");
+
+            // Dropdown container
+            let dropdown = document.createElement("div");
+            dropdown.className = "search-dropdown";
+            dropdown.style.display = "none";
+            input.parentElement.appendChild(dropdown);
+
+            function renderTags() {
+                container.innerHTML = "";
+                assignedUsers.forEach(u => {
+                    const tag = document.createElement("div");
+                    tag.classList.add("user-tag");
+                    tag.innerHTML =
+                        `<span>${u.firstName} ${u.lastName}</span>
+                         <span class="remove">x</span>`;
+
+                    tag.querySelector(".remove").addEventListener("click", () => {
+                        assignedUsers = assignedUsers.filter(au => au.id !== u.id);
+                        renderTags();
+                    });
+
+                    container.appendChild(tag);
+                });
+            }
+
+            renderTags();
+
+            let timeout = null;
+
+            input.addEventListener("input", () => {
+                clearTimeout(timeout);
+
+                const query = input.value.trim();
+                if (!query) {
+                    dropdown.style.display = "none";
+                    return;
+                }
+
+                timeout = setTimeout(async () => {
+                    try {
+                        const res = await fetch(`/api/Example/Users/search?q=${encodeURIComponent(query)}`);
+                        if (!res.ok) return;
+
+                        const results = await res.json();
+
+                        dropdown.innerHTML = "";
+                        dropdown.style.display = results.length > 0 ? "block" : "none";
+
+                        results.forEach(u => {
+
+                            // Evita duplicati
+                            if (assignedUsers.some(au => au.id === u.id)) return;
+
+                            const row = document.createElement("div");
+                            row.textContent = `${u.firstName} ${u.lastName}`;
+                            row.addEventListener("click", () => {
+
+                                // Aggiungi
+                                assignedUsers.push(u);
+
+                                // Reset UI
+                                input.value = "";
+                                dropdown.style.display = "none";
+                                renderTags();
+                            });
+
+                            dropdown.appendChild(row);
+                        });
+
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }, 300);
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!input.contains(e.target)) dropdown.style.display = "none";
+            });
+        }
+
+        let modalMode = null;
+        let editingId = null;
+        let currentProjectId = null;
+
+        function openOverlay(mode, data = null) {
+            modalMode = mode;
+
+            if (mode === "createProject") {
+                activeRegex = projectCodeRegex;
+                currentProjectId = null;
+            }
+
+            else if (mode === "editProject") {
+                activeRegex = projectCodeRegex;
+                currentProjectId = data?.projectId ?? null;
+                editingId = data?.id ?? null;
+            }
+
+            else if (mode === "createTask" || mode === "editTask") {
+                activeRegex = taskCodeRegex;
+
+                // Per i task, currentProjectId deve essere PER FORZA presente
+                currentProjectId = data?.projectId
+                                ?? currentProjectId
+                                ?? null;
+
+                if (!currentProjectId) {
+                    console.error("❌ ERRORE GRAVE: PER I TASK DEVE ESISTERE UN PROJECT ID");
+                }
+            }
+
+            const title = document.getElementById("overlayTitle");
+            const fields = document.getElementById("overlayFields");
+
+            // Reset pulizia
+            fields.innerHTML = "";
+            editingId = null;
+            currentProjectId = null;
+
+            switch (mode) {
+                case "createProject":
+                    title.textContent = "Nuova Attività";
+                    activeRegex = projectCodeRegex;
+                    fields.innerHTML = renderProjectFields();
+                    break;
+
+                case "editProject":
+                    title.textContent = "Modifica Attività";
+                    activeRegex = projectCodeRegex;
+                    editingId = data.id;               
+                    currentProjectId = data.id;
+                    fields.innerHTML = renderProjectFields(data);
+                    break;
+
+                case "createTask":
+                    title.textContent = "Nuovo Task";
+                    activeRegex = taskCodeRegex;
+                    currentProjectId = data.projectId;  
+                    fields.innerHTML = renderTaskFields();
+                    setTimeout(() => attachAssignedUsers(), 0);
+                    break;
+
+                case "editTask":
+                    title.textContent = "Modifica Task";
+                    activeRegex = taskCodeRegex;
+                    editingId = data.id;                 // ID del task
+                    currentProjectId = data.projectId;
+                    fields.innerHTML = renderTaskFields(data);
+                    setTimeout(() => attachAssignedUsers(data), 0);
+                    break;
+            }
+
+            setTimeout(attachValidation, 0);
+
+            overlay.classList.remove("hidden");
+        }
+
+        function renderProjectFields(data = {}) {
+            return `
+
+                <div>
+                    <label>Nome Attività</label>
+                    <input id="inputName" type="text" class="input" value="${data.name ?? ""}" />
+                </div>
+
+                <div class="two-cols">
+                    <div class="form-group">
+                        <label>Creato da</label>
+                        <div class="fake-input">
+                            <img src="@identitaCorrente.GravatarUrl" alt="Avatar" class="avatar" />
+                            <span>@User.Identity.Name</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label>Codice attività</label>
+                        <input id="inputCode" type="text" class="input" value="${data.code ?? ""}" placeholder="Es: C0001" />
+                        <small id="codeError" class="error"></small>
+                    </div>
+                </div>  
+            `;
+        }
+
+        function renderTaskFields(data = {}) {
+
+            return `
+                <div>
+                    <label>Nome Task</label>
+                    <input id="inputName" type="text" class="input" value="${data.name ?? ""}" />
+                </div>
+
+                <div class="two-cols">
+                    <div class="form-group">
+                        <label>Creato da</label>
+                        <div class="fake-input">
+                            <img src="@identitaCorrente.GravatarUrl" alt="Avatar" class="avatar" />
+                            <span>@User.Identity.Name</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label>Codice Task</label>
+                        <input id="inputCode" type="text" class="input" value="${data.code ?? ""}" placeholder="Es: TSK001" />
+                        <small id="codeError" class="error"></small>
+                    </div>
+                </div>
+
+                <div>
+                    <label>Assegnatari</label>
+                    <input id="assignedUserInput" type="text" class="input" placeholder="Scrivi il nome per aggiungere..." />
+                    <div id="assignedUsersContainer" class="assigned-users-container"></div>
+                </div>
+            `;
+        }
+
+        btnConfirm.addEventListener("click", async () => {
+            const payload = {
+                name: document.getElementById("inputName").value,
+                code: document.getElementById("inputCode").value,
+                assignedUserIds: assignedUsers.map(u => u.id)
+            };
+
+            if (modalMode === "editProject") {
+                payload.id = editingId;
+            }
+            if (modalMode === "editTask") {
+                payload.id = editingId;
+                payload.projectId = currentProjectId;
+            }
+
+            let endpoint = "";
+            let method = "";
+
+            switch (modalMode) {
+                case "createProject":
+                    endpoint = "/api/workmanagement/addProject";
+                    method = "post";
+                    break;
+
+                case "editProject":
+                    endpoint = `/api/workmanagement/editProject/${editingId}`;
+                    method = "put";
+                    break;
+
+                case "createTask":
+                    endpoint = `/api/WorkManagement/projects/${currentProjectId}/addTask`;
+                    method = "post";
+                    break;
+
+                case "editTask":
+                    endpoint = `/api/workmanagement/projects/${currentProjectId}/editTask/${editingId}`;
+                    method = "put";
+                    break;
+            }
+
+            try {
+                await axios[method](endpoint, payload);
+                closeOverlay();
+                loadProjects();
+            } catch (err) {
+                console.error(err);
+                alert("Errore durante il salvataggio");
+            }
+        });
+
+
+        async function loadProjects() {
+            const container = document.getElementById("projectListContainer");
+
+            try {
+                const res = await fetch("/api/Projects/ProjectsApi");
+                if (!res.ok) throw new Error("Errore nel recupero dei progetti");
+
+                const projects = await res.json();
+
+                container.innerHTML = ""; // reset
+
+                projects.forEach(project => {
+                    container.appendChild(createProjectItem(project));
+                });
+
+                const emptySlots = 10 - projects.length;
+                for (let i = 0; i < emptySlots; i++) {
+                    container.appendChild(createEmptySlot())
+                }
+
+            } catch (err) {
+                container.innerHTML = "<p style='color:red'>Errore nel caricamento</p>";
+                console.error(err);
+            }
+        }
+
+        function createEmptySlot() {
+            const div = document.createElement("div");
+            div.classList.add("project-item", "empty");
+
+            div.innerHTML = `
+                <div class="project-header empty-header">
+                </div>
+            `;
+
+            return div;
+        }
+
+        function createProjectItem(project) {
+            const wrapper = document.createElement("div");
+            wrapper.classList.add("project-item");
+
+            wrapper.innerHTML = `
+                <div class="project-header">
+                    <div class="project-info">
+                        <span class="project-code">${project.code}</span>
+                        <span class="project-name">${project.name}</span>
+                        <i class="fa-solid fa-chevron-down expand-icon"></i>
+                    </div>
+
+                    <div class="project-actions">
+                        <i class="fa-solid fa-plus action add-task"></i>
+                        <i class="fa-solid fa-pen-to-square action edit"></i>
+                        <i class="fa-solid fa-trash action delete"></i> 
+                    </div>
+                </div>
+
+                <div class="task-list hidden">
+                </div>
+            `;
+
+            // Inserisci i task
+            const taskContainer = wrapper.querySelector(".task-list");
+            project.tasks.forEach(t => {
+                t.projectId = project.projectId;
+                const taskHtml = createTaskItem(t);
+                taskContainer.appendChild(taskHtml);
+            });
+
+            // Gestione espansione
+            const expandIcon = wrapper.querySelector(".expand-icon");
+            expandIcon.addEventListener("click", () => {
+                expandIcon.classList.toggle("rotate");
+                taskContainer.classList.toggle("hidden");
+            });
+
+            wrapper.querySelector(".edit").addEventListener("click", () => openOverlay("editProject", { id: project.projectId, projectId: project.projectId, name: project.name, code: project.code }));
+            wrapper.querySelector(".delete").addEventListener("click", () => deleteProject(project.projectId));
+            wrapper.querySelector(".add-task").addEventListener("click", () => openOverlay("createTask", { projectId: project.projectId }));
+
+            return wrapper;
+        }
+
+        // ====== TEMPLATE HTML TASK ======
+        function createTaskItem(task) {
+            const div = document.createElement("div");
+            div.classList.add("task-item");
+
+            div.innerHTML = `
+                <span class="task-line"></span>
+
+                <div class="task-info">
+                    <span class="task-name">${task.name}</span>
+                    <span class="task-code">${task.code}</span>
+                </div>
+
+                <div class="task-actions">
+                    <i class="fa-solid fa-pen-to-square action edit"></i>
+                    <i class="fa-solid fa-trash action delete"></i>
+                </div>
+            `;
+
+            div.querySelector(".edit").addEventListener("click", () => openOverlay("editTask", {id: task.id, projectId: task.projectId, name: task.name, code: task.code, assignedUsers: task.assignedUsers ?? []}));
+            div.querySelector(".delete").addEventListener("click", () => deleteTask(task.projectId, task.id));
+
+            return div;
+        }
+
+        async function deleteProject(id) {
+            if (!confirm("Eliminare questo progetto?")) return;
+
+            try {
+                await axios.delete(`/api/workmanagement/deleteProject/${id}`);
+                loadProjects();
+            } catch (err) {
+                console.error(err);
+                alert("Errore eliminazione");
+            }
+        }
+
+        async function deleteTask(projectId, taskId) {
+            if (!confirm("Eliminare questo task?")) return;
+
+            try {
+                await axios.delete(`/api/WorkManagement/projects/${projectId}/deleteTask/${taskId}`);
+                loadProjects();
+            } catch (err) {
+                console.error(err);
+                alert("Errore eliminazione task");
+            }
+        }
+
+        // Carica tutto appena arriva la pagina
+        document.addEventListener("DOMContentLoaded", loadProjects);
+    </script>
 }
