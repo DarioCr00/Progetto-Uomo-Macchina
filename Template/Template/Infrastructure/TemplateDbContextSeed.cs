@@ -17,13 +17,14 @@ namespace Template.Infrastructure
             //mantiene il seeding degli utenti già esistenti se presente
             DataGenerator.InitializeUsers(context);
 
+            var adminId = Guid.Parse("c5a1c8d0-4f2d-4e20-9f54-2c6c9f7b8b77"); //id admin da usare come creatore per progetti hardcoded
 
             //crea degli esempi se non esistono dei veri
             if(!context.Projects.Any())
             {
                 context.Projects.AddRange(
-                    new Project { Id = Guid.NewGuid(), Code = "C0001", Name = "Commessa Cliente A"},
-                    new Project { Id = Guid.NewGuid(), Code = "C0002", Name = "Commessa Cliente B"}
+                    new Project { Id = Guid.NewGuid(), Code = "C0001", Name = "Commessa Cliente A", CreatedByUserId = adminId},
+                    new Project { Id = Guid.NewGuid(), Code = "C0002", Name = "Commessa Cliente B", CreatedByUserId = adminId}
                 );
                 context.SaveChanges();
             }
@@ -46,9 +47,27 @@ namespace Template.Infrastructure
                 if (projects.Count >= 2)
                 {
                     context.Tasks.AddRange(
-                    new TaskItem { Id = Guid.NewGuid(), Code = "TSK001", Name = "Analisi tecnica", ProjectId = projects[0].Id },
-                    new TaskItem { Id = Guid.NewGuid(), Code = "TSK002", Name = "Sviluppo API", ProjectId = projects[0].Id },
-                    new TaskItem { Id = Guid.NewGuid(), Code = "TSK003", Name = "Testing", ProjectId = projects[1].Id }
+                    new TaskItem { 
+                        Id = Guid.NewGuid(), 
+                        Code = "TSK001", 
+                        Name = "Analisi tecnica", 
+                        ProjectId = projects[0].Id, 
+                        CreatedByUserId = adminId 
+                    },
+                    new TaskItem { 
+                        Id = Guid.NewGuid(), 
+                        Code = "TSK002", 
+                        Name = "Sviluppo API", 
+                        ProjectId = projects[0].Id,
+                        CreatedByUserId = adminId,
+                    },
+                    new TaskItem { 
+                        Id = Guid.NewGuid(), 
+                        Code = "TSK003", 
+                        Name = "Testing", 
+                        ProjectId = projects[1].Id,
+                        CreatedByUserId = adminId
+                    }
                     );
                 }
 

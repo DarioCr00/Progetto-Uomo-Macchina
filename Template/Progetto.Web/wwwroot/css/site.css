@@ -12405,7 +12405,7 @@ tr.row-disabled select {
 
 /* Barra superiore */
 .top-bar {
-  width: 100%;
+  width: 70%;
   display: flex;
   justify-content: flex-end;
 }
@@ -12421,7 +12421,7 @@ tr.row-disabled select {
 }
 
 .bottom-bar {
-  width: 100%;
+  width: 70%;
   height: 100%;
   padding-top: 20px;
   box-sizing: border-box;
@@ -12429,7 +12429,6 @@ tr.row-disabled select {
 
 .project-list {
   width: 100%;
-  max-width: 900px;
   background: #2E343A;
   padding: 20px;
   border-radius: 12px;
@@ -12600,6 +12599,24 @@ tr.row-disabled select {
   text-align: left;
 }
 
+.project-card.confirm-mode {
+  width: 450px;
+  aspect-ratio: auto;
+  min-height: 200px;
+  padding: 30px;
+}
+
+.confirm-text {
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.confirm-text span {
+  font-weight: 600;
+  color: #FF6B6B; /* Colore per evidenziare codice e nome */
+}
+
 .input, .fake-input {
   width: 100%;
   padding: 10px;
@@ -12726,13 +12743,20 @@ tr.row-disabled select {
   font-weight: bold;
 }
 
+.search-wrapper {
+  position: relative;
+  width: 100%;
+}
+
 .search-dropdown {
   position: absolute;
-  background: white;
-  color: black;
+  top: 100%; /* Incollata sotto l'input */
+  left: 0;
+  width: 100%;
+  background: #343A40;
+  color: #E5E7EB;
   border: 1px solid #ddd;
   border-radius: 6px;
-  width: 100%;
   max-height: 180px;
   overflow-y: hidden;
   z-index: 20;
@@ -12745,5 +12769,10 @@ tr.row-disabled select {
 }
 
 .search-dropdown div:hover {
-  background: #f3f3f3;
+  background: #24282C;
+}
+
+#assignedUserInput {
+  transition: border-radius 0.2s;
+  margin-bottom: 0;
 }

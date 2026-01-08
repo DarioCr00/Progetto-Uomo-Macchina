@@ -34,7 +34,7 @@ namespace Progetto.Web.Areas.Example.Users
             ModelUnbinderHelpers.ModelUnbinders.Add(typeof(IndexViewModel), new SimplePropertyModelUnbinder());
         }
 
-        [HttpGet]
+        [HttpGet("index")]
         public virtual async Task<IActionResult> Index(IndexViewModel model)
         {
             var users = await _sharedService.Query(model.ToUsersIndexQuery());
@@ -43,13 +43,13 @@ namespace Progetto.Web.Areas.Example.Users
             return View(model);
         }
 
-        [HttpGet]
+        [HttpGet("new")]
         public virtual IActionResult New()
         {
             return RedirectToAction(Actions.Edit());
         }
 
-        [HttpGet]
+        [HttpGet("edit/{id:guid}")]
         public virtual async Task<IActionResult> Edit(Guid? id)
         {
             var model = new EditViewModel();
@@ -67,7 +67,7 @@ namespace Progetto.Web.Areas.Example.Users
             return View(model);
         }
 
-        [HttpPost]
+        [HttpPost("edit")]
         public virtual async Task<IActionResult> Edit(EditViewModel model)
         {
             if (ModelState.IsValid)
@@ -100,7 +100,7 @@ namespace Progetto.Web.Areas.Example.Users
             return RedirectToAction(Actions.Edit(model.Id));
         }
 
-        [HttpPost]
+        [HttpPost("delete")]
         public virtual async Task<IActionResult> Delete(Guid id)
         {
             // Query to delete user

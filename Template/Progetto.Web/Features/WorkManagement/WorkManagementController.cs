@@ -102,7 +102,7 @@ namespace Progetto.Web.Features.WorkManagement
         }
 
         [HttpPost("projects/{projectId:guid}/addTask")]
-        public async Task<IActionResult> CreateTask([FromBody] CreateTaskRequest req)
+        public async Task<IActionResult> CreateTask(Guid projectId,[FromBody] CreateTaskRequest req)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -121,7 +121,8 @@ namespace Progetto.Web.Features.WorkManagement
                 Id = Guid.NewGuid(),
                 Name = req.Name,
                 Code = req.Code,
-                CreatedByUserId = creatorId
+                CreatedByUserId = creatorId,
+                ProjectId = projectId
             };
 
             _context.Tasks.Add(task);
@@ -150,6 +151,7 @@ namespace Progetto.Web.Features.WorkManagement
                 name = task.Name,
                 code = task.Code,
                 createdByUserId = task.CreatedByUserId,
+                projectId = task.ProjectId,
                 assignedUsers = req.AssignedUserIds
             });
         }

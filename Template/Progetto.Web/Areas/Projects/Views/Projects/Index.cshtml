@@ -13,7 +13,6 @@
     </div>
     <div class="bottom-bar">
         <div id="projectListContainer" class="project-list">
-
         </div>
     </div>
 </div>
@@ -24,26 +23,6 @@
         <h2 id="overlayTitle"></h2>
 
         <div id="overlayFields"></div>
-
-        @* <div>
-            <label>Nome Attività</label>
-            <input id="projName" type="text" class="input" />
-        </div>
-
-        <div class="two-cols">
-            <div class="form-group">
-                <label>Creato da</label>
-                <div class="fake-input">
-                    <img src="@identitaCorrente.GravatarUrl" alt="Avatar" class="avatar" />
-                    <span>@User.Identity.Name</span>
-                </div> 
-            </div>
-            <div>
-                <label>Codice attività</label>
-                <input id="projCode" type="text" class="input" placeholder="Es: C0001" />
-                <small id="codeError" class="error"></small>
-            </div>
-        </div> *@
 
         <div class="btn-row">
             <button id="btnCancel" class="btn cancel">Annulla</button>
@@ -64,7 +43,7 @@
         // Regex per CODICE: Lettera maiuscola + 4 cifre (Es: C0001) / Lettere maiuscole + 3 cifre (Es: TSK001)
         const projectCodeRegex = /^[A-Z][0-9]{4}$/;
         const taskCodeRegex = /^TSK[0-9]{3}$/;
-        
+
         btnOpen.addEventListener("click", () => {
             //overlay.classList.remove("hidden");
             openOverlay("createProject");
@@ -91,62 +70,70 @@
 
         let activeRegex = null;
 
-        function attachValidation() {
-
+        //spostata a livello globale per usarla anche su AssignedUser
+        function validate() {
             const inputName = document.getElementById("inputName");
             const inputCode = document.getElementById("inputCode");
             const codeError = document.getElementById("codeError");
 
             if (!inputName || !inputCode) return;
 
-            function validate() {
-                let valid = true;
+            let valid = true;
 
-                // Nome obbligatorio
-                if (!inputName.value.trim())
+            // Nome obbligatorio
+            if (!inputName.value.trim())
+                valid = false;
+
+            // Se il campo codice NON è vuoto → valida
+            if (inputCode.value.trim().length > 0) {
+                if (!activeRegex.test(inputCode.value)) {
                     valid = false;
-
-                // Se il campo codice NON è vuoto → valida
-                if (inputCode.value.trim().length > 0) {
-                    if (!activeRegex.test(inputCode.value)) {
-                        valid = false;
-                        if (codeError)
-                            codeError.textContent = 
-                                modalMode.includes("Project")
-                                ? "Formato non valido. Es: C0001"
-                                : "Formato non valido. Es: TSK001";
-                    } else {
-                        if (codeError)
-                            codeError.textContent = "";
-                    }
+                    if (codeError)
+                        codeError.textContent =
+                            modalMode.includes("Project")
+                            ? "Formato non valido. Es: C0001"
+                            : "Formato non valido. Es: TSK001";
                 } else {
-                    // Campo vuoto → nessun errore
                     if (codeError)
                         codeError.textContent = "";
-                    valid = false; // comunque deve essere richiesto
                 }
-
-                valid ? enableConfirm() : disableConfirm();
+            } else {
+                // Campo vuoto → nessun errore
+                if (codeError)
+                    codeError.textContent = "";
+                valid = false; // comunque deve essere richiesto
             }
+
+            valid ? enableConfirm() : disableConfirm();
+        }
+
+        function attachValidation() {
+
+            const inputName = document.getElementById("inputName");
+            const inputCode = document.getElementById("inputCode");
+
+            if (!inputName || !inputCode) return;
 
             inputName.addEventListener("input", validate);
             inputCode.addEventListener("input", validate);
 
+            validate();
         }
 
         let assignedUsers = [];
 
-                function attachAssignedUsers(data = {}) {
+        function attachAssignedUsers(data = {}) {
             assignedUsers = data.assignedUsers ?? [];
 
             const container = document.getElementById("assignedUsersContainer");
             const input = document.getElementById("assignedUserInput");
+            const wrapper = input.parentElement;
 
             // Dropdown container
             let dropdown = document.createElement("div");
             dropdown.className = "search-dropdown";
             dropdown.style.display = "none";
-            input.parentElement.appendChild(dropdown);
+            wrapper.appendChild(dropdown);
 
             function renderTags() {
                 container.innerHTML = "";
@@ -154,7 +141,7 @@
                     const tag = document.createElement("div");
                     tag.classList.add("user-tag");
                     tag.innerHTML =
-                        `<span>${u.firstName} ${u.lastName}</span>
+                        `<span>${u.fullName}</span>
                          <span class="remove">x</span>`;
 
                     tag.querySelector(".remove").addEventListener("click", () => {
@@ -164,6 +151,8 @@
 
                     container.appendChild(tag);
                 });
+
+                validate();
             }
 
             renderTags();
@@ -195,7 +184,7 @@
                             if (assignedUsers.some(au => au.id === u.id)) return;
 
                             const row = document.createElement("div");
-                            row.textContent = `${u.firstName} ${u.lastName}`;
+                            row.textContent = u.fullName;
                             row.addEventListener("click", () => {
 
                                 // Aggiungi
@@ -257,8 +246,7 @@
 
             // Reset pulizia
             fields.innerHTML = "";
-            editingId = null;
-            currentProjectId = null;
+
 
             switch (mode) {
                 case "createProject":
@@ -270,15 +258,27 @@
                 case "editProject":
                     title.textContent = "Modifica Attività";
                     activeRegex = projectCodeRegex;
-                    editingId = data.id;               
+                    editingId = data.id;
                     currentProjectId = data.id;
                     fields.innerHTML = renderProjectFields(data);
+                    break;
+
+                case "deleteProject":
+                    title.textContent = "Elimina Attività";
+                    document.querySelector(".project-card").classList.add("confirm-mode");
+                    fields.innerHTML = `
+                        <p class="confirm-text">
+                            Sei sicuro di voler eliminare l'attività <br>
+                            <span>${data.code} - ${data.name}</span>?
+                        </p>`;
+                    enableConfirm();
+                    editingId = data.id;
                     break;
 
                 case "createTask":
                     title.textContent = "Nuovo Task";
                     activeRegex = taskCodeRegex;
-                    currentProjectId = data.projectId;  
+                    currentProjectId = data.projectId;
                     fields.innerHTML = renderTaskFields();
                     setTimeout(() => attachAssignedUsers(), 0);
                     break;
@@ -291,6 +291,19 @@
                     fields.innerHTML = renderTaskFields(data);
                     setTimeout(() => attachAssignedUsers(data), 0);
                     break;
+
+                case "deleteTask":
+                    title.textContent = "Elimina Task";
+                    document.querySelector(".project-card").classList.add("confirm-mode");
+                    fields.innerHTML = `
+                        <p class="confirm-text">
+                            Sei sicuro di voler eliminare il task <br>
+                            <span>${data.code} - ${data.name}</span>?
+                        </p>`;
+                    enableConfirm();
+                    editingId = data.id;
+                    currentProjectId = data.projectId;
+                    break;
             }
 
             setTimeout(attachValidation, 0);
@@ -299,6 +312,10 @@
         }
 
         function renderProjectFields(data = {}) {
+
+            const creatorName = data.createdByUserName || "@User.Identity.Name";
+            const creatorAvatar = data.createdByUserGravatar || "@identitaCorrente.GravatarUrl";
+
             return `
 
                 <div>
@@ -310,8 +327,8 @@
                     <div class="form-group">
                         <label>Creato da</label>
                         <div class="fake-input">
-                            <img src="@identitaCorrente.GravatarUrl" alt="Avatar" class="avatar" />
-                            <span>@User.Identity.Name</span>
+                            <img src="${creatorAvatar}" alt="Avatar" class="avatar" />
+                            <span>${creatorName}</span>
                         </div>
                     </div>
                     <div>
@@ -319,11 +336,14 @@
                         <input id="inputCode" type="text" class="input" value="${data.code ?? ""}" placeholder="Es: C0001" />
                         <small id="codeError" class="error"></small>
                     </div>
-                </div>  
+                </div>
             `;
         }
 
         function renderTaskFields(data = {}) {
+
+            const creatorName = data.createdByUserName || "@User.Identity.Name";
+            const creatorAvatar = data.createdByUserGravatar || "@identitaCorrente.GravatarUrl";
 
             return `
                 <div>
@@ -335,8 +355,8 @@
                     <div class="form-group">
                         <label>Creato da</label>
                         <div class="fake-input">
-                            <img src="@identitaCorrente.GravatarUrl" alt="Avatar" class="avatar" />
-                            <span>@User.Identity.Name</span>
+                            <img src="${creatorAvatar}" alt="Avatar" class="avatar" />
+                            <span>${creatorName}</span>
                         </div>
                     </div>
                     <div>
@@ -348,13 +368,31 @@
 
                 <div>
                     <label>Assegnatari</label>
-                    <input id="assignedUserInput" type="text" class="input" placeholder="Scrivi il nome per aggiungere..." />
+                    <div class="search-wrapper">
+                        <input id="assignedUserInput" type="text" class="input" placeholder="Scrivi il nome per aggiungere..." />
+                    </div>
                     <div id="assignedUsersContainer" class="assigned-users-container"></div>
                 </div>
             `;
         }
 
         btnConfirm.addEventListener("click", async () => {
+
+            if(modalMode === "deleteProject" || modalMode === "deleteTask") {
+                let endpoint = modalMode === "deleteProject"
+                    ? `/api/workmanagement/deleteProject/${editingId}`
+                    : `/api/WorkManagement/projects/${currentProjectId}/deleteTask/${editingId}`;
+                try {
+                    await axios.delete(endpoint);
+                    closeOverlay();
+                    loadProjects();
+                } catch (err) {
+                    console.error(err);
+                    alert("Errore durante l'eliminazione");
+                }
+                return;
+            }
+
             const payload = {
                 name: document.getElementById("inputName").value,
                 code: document.getElementById("inputCode").value,
@@ -458,7 +496,7 @@
                     <div class="project-actions">
                         <i class="fa-solid fa-plus action add-task"></i>
                         <i class="fa-solid fa-pen-to-square action edit"></i>
-                        <i class="fa-solid fa-trash action delete"></i> 
+                        <i class="fa-solid fa-trash action delete"></i>
                     </div>
                 </div>
 
@@ -481,8 +519,14 @@
                 taskContainer.classList.toggle("hidden");
             });
 
-            wrapper.querySelector(".edit").addEventListener("click", () => openOverlay("editProject", { id: project.projectId, projectId: project.projectId, name: project.name, code: project.code }));
-            wrapper.querySelector(".delete").addEventListener("click", () => deleteProject(project.projectId));
+            wrapper.querySelector(".edit").addEventListener("click", () => openOverlay("editProject", {
+                                                                                id: project.projectId,
+                                                                                projectId: project.projectId,
+                                                                                name: project.name,
+                                                                                code: project.code,
+                                                                                createdByUserName: project.createdByUserName,
+                                                                                createdByUserGravatar: project.createdByUserGravatar}));
+            wrapper.querySelector(".delete").addEventListener("click", () => deleteProject(project));
             wrapper.querySelector(".add-task").addEventListener("click", () => openOverlay("createTask", { projectId: project.projectId }));
 
             return wrapper;
@@ -507,34 +551,34 @@
                 </div>
             `;
 
-            div.querySelector(".edit").addEventListener("click", () => openOverlay("editTask", {id: task.id, projectId: task.projectId, name: task.name, code: task.code, assignedUsers: task.assignedUsers ?? []}));
-            div.querySelector(".delete").addEventListener("click", () => deleteTask(task.projectId, task.id));
+            div.querySelector(".edit").addEventListener("click", () => openOverlay("editTask", {
+                                                                            id: task.id,
+                                                                            projectId: task.projectId,
+                                                                            name: task.name,
+                                                                            code: task.code,
+                                                                            assignedUsers: task.assignedUsers ?? [],
+                                                                            createdByUserName: task.createdByUserName,
+                                                                            createdByUserGravatar: task.createdByUserGravatar}));
+            div.querySelector(".delete").addEventListener("click", () => deleteTask(task.projectId, task));
 
             return div;
         }
 
-        async function deleteProject(id) {
-            if (!confirm("Eliminare questo progetto?")) return;
-
-            try {
-                await axios.delete(`/api/workmanagement/deleteProject/${id}`);
-                loadProjects();
-            } catch (err) {
-                console.error(err);
-                alert("Errore eliminazione");
-            }
+        function deleteProject(project) {
+            openOverlay("deleteProject", {
+                id: project.projectId,
+                code: project.code,
+                name: project.name
+            });
         }
 
-        async function deleteTask(projectId, taskId) {
-            if (!confirm("Eliminare questo task?")) return;
-
-            try {
-                await axios.delete(`/api/WorkManagement/projects/${projectId}/deleteTask/${taskId}`);
-                loadProjects();
-            } catch (err) {
-                console.error(err);
-                alert("Errore eliminazione task");
-            }
+        function deleteTask(projectId, task) {
+            openOverlay("deleteTask", {
+                id: task.id,
+                projectId: projectId,
+                code: task.code,
+                name: task.name
+            });
         }
 
         // Carica tutto appena arriva la pagina

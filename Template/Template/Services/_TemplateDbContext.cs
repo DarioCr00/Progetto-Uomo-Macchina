@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Template.Infrastructure;
 using Template.Services.Shared;
 using Template.Services.Shared.TimeTracking;
@@ -32,6 +33,16 @@ namespace Template.Services
             modelBuilder.Entity<TimeEntry>().HasIndex(t => new { t.UserId, t.Date });
             modelBuilder.Entity<Project>().HasIndex(p => p.Code).IsUnique();
             modelBuilder.Entity<TaskAssignment>().HasKey(ta => new { ta.TaskId, ta.UserId });
+
+            modelBuilder.Entity<Project>()
+                .Property(p => p.CreatedByUserId)
+                .ValueGeneratedNever()
+                .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
+            modelBuilder.Entity<TaskItem>()
+                .Property(t => t.CreatedByUserId)
+                .ValueGeneratedNever()
+                .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
         }
     }
 }
