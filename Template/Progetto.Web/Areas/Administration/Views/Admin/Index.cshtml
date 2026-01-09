@@ -210,6 +210,7 @@
                     this.loadPools();
                     this.loadTimeEntries();
                     document.addEventListener('click', this._handleGlobalClick);
+                    window.addEventListener('scroll', this.closeAllSuggestions, true);
                 },
                 methods: {
                     isFirstOfDay(index) {
@@ -348,7 +349,13 @@
                             if(r.suggestionsActivityVisible){ const input=e.target.closest('.activity-input'); const drop=e.target.closest('.suggestions-list'); if(!input&&!drop) r.suggestionsActivityVisible=false; }
                             if(r.suggestionsTaskVisible){ const input=e.target.closest('.task-input'); const drop=e.target.closest('.suggestions-list'); if(!input&&!drop) r.suggestionsTaskVisible=false; }
                         });
-                    }
+                    },
+                    closeAllSuggestions() {
+                        this.rows.forEach(r => {
+                            r.suggestionsActivityVisible = false;
+                            r.suggestionsTaskVisible = false;
+                        });
+                    },
                 }
             }).mount('#admin-timeentries-app');
 

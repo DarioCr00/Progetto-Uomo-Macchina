@@ -55,6 +55,9 @@
 
         function closeOverlay() {
             overlay.classList.add("hidden");
+
+            document.querySelector(".project-card").classList.remove("confirm-mode");
+
             disableConfirm();
         }
 
@@ -216,6 +219,9 @@
 
         function openOverlay(mode, data = null) {
             modalMode = mode;
+
+            //pulizia preventiva, chiudere un menu ed aprirne un altro bugga i tasti graficamente
+            document.querySelector(".project-card").classList.remove("confirm-mode");
 
             if (mode === "createProject") {
                 activeRegex = projectCodeRegex;

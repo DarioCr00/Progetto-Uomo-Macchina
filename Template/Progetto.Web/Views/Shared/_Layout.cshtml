@@ -18,14 +18,18 @@
     <div class="onit-page-sticky-top" id="onit-page-sticky-top">
         <nav class="navbar navbar-expand-lg custom-navbar">
             <div class="container-fluid">
+                @{
+                    // Identifichiamo il nome della pagina attiva per l'indicatore mobile
+                    var activePageName = currentController == "TimeTracking" ? "WebApp Rendicontazione" :
+                    currentController == "Admin" ? "Amministrazione" :
+                    currentController == "Projects" ? "Creazione/Assegnazione Progetto" : "Menu";
+                }
 
-                @* <!-- TITOLO DELLA WEBAPP -->
-                <a class="navbar-brand navbar-title" href="/">
-                    @ViewData["Title"]
-                </a> *@
+                <span class="navbar-brand d-lg-none text-white fw-bold" style="font-size: 0.95rem;">
+                    @activePageName
+                </span>
 
-                <div class="d-flex align-items-center navbar-left-group">
-
+                <div class="d-none d-lg-flex align-items-center navbar-left-group">
                     <a class="nav-link @(currentController == "TimeTracking" ? "fw-bold" : "")" href="/TimeTracking">WebApp Rendicontazione</a>
 
                     @if (User.IsInRole("Admin") || User.IsInRole("TeamLeader"))
@@ -43,33 +47,38 @@
 
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
 
-                    <ul class="navbar-nav ms-auto">
+                    <ul class="navbar-nav d-lg-none border-bottom border-secondary mb-2 pb-2">
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "TimeTracking" ? "active" : "")" href="/TimeTracking">WebApp Rendicontazione</a>
+                        </li>
+                        @if (User.IsInRole("Admin") || User.IsInRole("TeamLeader"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @(currentController == "Admin" ? "active" : "")" href="/Administration">Amministrazione</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @(currentController == "Projects" ? "active" : "")" href="/Projects">Creazione/Assegnazione Progetto</a>
+                            </li>
+                        }
+                    </ul>
 
-                        @* Utente loggato *@
+                    <ul class="navbar-nav ms-auto">
                         @if (identitaCorrente != null)
                         {
                             <li class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle user-info" data-bs-toggle="dropdown">
-                                    <img class="user-profile-picture-small"
-                                         src="@identitaCorrente.GravatarUrl" />
+                                    <img class="user-profile-picture-small" src="@identitaCorrente.GravatarUrl" />
                                     @identitaCorrente.EmailUtenteCorrente
                                 </a>
-
                                 <div class="dropdown-menu dropdown-menu-end">
-                                    <a class="dropdown-item" href="javascript:void(0)"
-                                       onclick="document.getElementById('POST_LogOut').submit()">
+                                    <a class="dropdown-item" href="javascript:void(0)" onclick="document.getElementById('POST_LogOut').submit()">
                                         <i class="fa-solid fa-right-from-bracket"></i>&nbsp;Esci
                                     </a>
-
-                                    <form method="post"
-                                          action="@Url.Action(MVC.Login.Logout())"
-                                          id="POST_LogOut"></form>
+                                    <form method="post" action="@Url.Action(MVC.Login.Logout())" id="POST_LogOut"></form>
                                 </div>
                             </li>
                         }
-
                     </ul>
-
                 </div>
             </div>
         </nav>
