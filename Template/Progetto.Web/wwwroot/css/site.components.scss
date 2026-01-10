@@ -92,7 +92,7 @@
     gap: 32px;
     align-items: center;
     justify-content: center;
-    flex-wrap: wrap; /* su mobile vanno a capo */
+    flex-wrap: nowrap;
 }
 
 /* Card comune */
@@ -356,11 +356,11 @@
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;
-    border-radius: 8px; /* più arrotondato */
+    border-radius: 8px; /* piu' arrotondato */
     border: 1px solid #555;
     background-color: #343A40; /* richiesto */
     color: white;
-    font-weight: 300; /* testo più sottile */
+    font-weight: 300; /* testo piu' sottile */
     font-size: 0.95rem;
 }
 

@@ -21,7 +21,7 @@
         gap: 12px;
         flex-wrap: nowrap;
         justify-content: space-between;
-        align-items: stretch;
+        align-items: center;
     }
 
     .calendar-card.small {
@@ -255,7 +255,7 @@
     }
 
     .days-table td:nth-of-type(4)::before {
-        content: "Attività";
+        content: "Attivit\E0";
     }
 
     .days-table td:nth-of-type(5)::before {
@@ -263,7 +263,7 @@
     }
 
     .days-table td:nth-of-type(6)::before {
-        content: "Modalità";
+        content: "Modalit\E0";
     }
 
     .hours-input, .text-input, .select-input {

@@ -110,7 +110,10 @@
                                 <Teleport to="body">
                                     <ul v-if="row.suggestionsActivityVisible"
                                         class="suggestions-list floating"
-                                        :style="row.activityDropdownStyle">
+                                        :style="row.activityDropdownStyle"
+                                        @@mouseenter="isOverSuggestions = true"
+                                        @@mouseleave="isOverSuggestions = false"
+                                        @@wheel.stop>
                                         <li v-for="act in row.activitySuggestions"
                                             :key="act.id"
                                         @@click ="selectSuggestion(row,'activity',act)">
@@ -138,7 +141,9 @@
                                 <Teleport to="body">
                                     <ul v-if="row.suggestionsTaskVisible"
                                         class="suggestions-list floating"
-                                        :style="row.taskDropdownStyle">
+                                        :style="row.taskDropdownStyle"
+                                        @@mouseenter ="isOverSuggestions = true"
+                                        @@mouseleave ="isOverSuggestions = false">
 
                                         <li v-for="t in row.taskSuggestions"
                                             :key="t.id"
@@ -214,7 +219,9 @@
                             { value: 3, label: 'Other' },
                         ],
 
-                        _localRowCounter: 1
+                        _localRowCounter: 1,
+
+                        isOverSuggestions: false
                     };
                 },
 
@@ -390,7 +397,22 @@
                     async buildDaysList() {
                         try {
                             const daysRes = await axios.get(`/api/timetracking/timetrackingapi/days-list?mode=${this.mode}`);
-                            this.daysList = (daysRes.data || []).sort((a, b) => new Date(b.date) - new Date(a.date));
+                            let rawData = daysRes.data || [];
+
+                            if (this.mode === 'month') {
+                                const today = new Date();
+                                // creazione di una stringa YYYY-MM-DD per il confronto testuale sicuro
+                                const yyyy = today.getFullYear();
+                                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                                const dd = String(today.getDate()).padStart(2, '0');
+                                const todayStr = `${yyyy}-${mm}-${dd}`;
+
+                                // Teniamo solo i giorni che sono minori o uguali a oggi
+                                rawData = rawData.filter(d => d.date <= todayStr);
+                            }
+
+                            //ordinamento del giorno (dal piu' recente al piu' vecchio)
+                            this.daysList = rawData.sort((a, b) => new Date(b.date) - new Date(a.date));
 
                             // transforma ogni giorno in un oggetto con un array di righe (parte con 1 vuota)
                             this.daysWithRows = this.daysList.map(d => {
@@ -627,6 +649,9 @@
                             row.taskSuggestions = [];
                             row.suggestionsTaskVisible = false;
                         }
+
+                        this.isOverSuggestions = false; //reset della variabile per lo stato pulito
+
                         this.autoPersistRow(row);
                     },
 
@@ -657,6 +682,11 @@
                     },
 
                     _handleGlobalScroll() {
+                        //permette lo scroll all'interno del menu
+                        if (this.isOverSuggestions) {
+                            return;
+                        }
+
                         this.closeAllSuggestions();
                     },
 

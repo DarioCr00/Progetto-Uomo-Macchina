@@ -78,6 +78,7 @@
     padding: 4px 0;
     margin: 0;
     border: 1px solid #3A4046;
+    overscroll-behavior: contain !important;
 }
 
 .suggestions-list.floating {
@@ -166,7 +167,7 @@ tr.row-disabled select {
     align-items: end;
 }
 
-//Tabella Attività e Tasks
+//Tabella Attivita' e Tasks
 .project-list {
     width: 100%;
     background: #2E343A;
@@ -203,7 +204,7 @@ tr.row-disabled select {
     transform: rotate(180deg);
 }
 
-/* Info attività */
+/* Info attivita' */
 .project-info {
     display: flex;
     gap: 12px;
@@ -219,7 +220,7 @@ tr.row-disabled select {
     opacity: 0.7;
 }
 
-/* Azioni attività */
+/* Azioni attivita' */
 .project-actions {
     display: flex;
     gap: 12px;

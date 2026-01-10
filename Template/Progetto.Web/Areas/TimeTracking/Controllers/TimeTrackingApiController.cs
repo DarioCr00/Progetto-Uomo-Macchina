@@ -82,7 +82,7 @@ namespace Progetto.Web.Areas.TimeTracking.Controllers
             }
             else // "upto"
             {
-                from = new DateTime(today.Year, 1, 1);
+                from = today.AddDays(-89);
                 to = today;
             }
 

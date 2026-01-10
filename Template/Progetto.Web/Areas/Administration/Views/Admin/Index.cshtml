@@ -140,7 +140,10 @@
                                    @@input="onTypeSearch(row,'activity')"
                                    @@focus="openSuggestions(row,'activity',$event)" />
                             <Teleport to="body">
-                                <ul v-if="row.suggestionsActivityVisible" class="suggestions-list floating" :style="row.activityDropdownStyle">
+                                <ul v-if="row.suggestionsActivityVisible" class="suggestions-list floating" 
+                                    :style="row.activityDropdownStyle"
+                                    @@mouseenter="isOverSuggestions = true"
+                                    @@mouseleave="isOverSuggestions = false">
                                     <li v-for="a in row.activitySuggestions" :key="a.id" @@click="selectSuggestion(row,'activity',a)">
                                         {{ a.code }} - {{ a.name }}
                                     </li>
@@ -156,7 +159,11 @@
                                    @@input="onTypeSearch(row,'task')"
                                    @@focus="openSuggestions(row,'task',$event)" />
                             <Teleport to="body">
-                                <ul v-if="row.suggestionsTaskVisible" class="suggestions-list floating" :style="row.taskDropdownStyle">
+                                <ul v-if="row.suggestionsTaskVisible" class="suggestions-list floating" 
+                                    :style="row.taskDropdownStyle"
+                                    @@mouseenter="isOverSuggestions = true"
+                                    @@mouseleave="isOverSuggestions = false"
+                                    @@wheel.stop>
                                     <li v-for="t in row.taskSuggestions" :key="t.id" @@click="selectSuggestion(row,'task',t)">
                                         {{ t.code }} - {{ t.name }}
                                     </li>
@@ -203,7 +210,8 @@
                             { value: 2, label: 'Travel' },
                             { value: 3, label: 'Other' },
                         ],
-                        _localRowCounter: 1
+                        _localRowCounter: 1,
+                        isOverSuggestions: false
                     };
                 },
                 mounted() {
@@ -351,6 +359,11 @@
                         });
                     },
                     closeAllSuggestions() {
+
+                        if (this.isOverSuggestions) {
+                            return;
+                        }
+
                         this.rows.forEach(r => {
                             r.suggestionsActivityVisible = false;
                             r.suggestionsTaskVisible = false;
