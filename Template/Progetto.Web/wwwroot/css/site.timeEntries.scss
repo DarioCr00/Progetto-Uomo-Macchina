@@ -85,9 +85,15 @@
     background: #24282C;
     border-radius: 6px;
     box-shadow: 0 10px 30px rgba(0,0,0,.4);
+    overscroll-behavior: contain;
     list-style: none;
     margin: 0;
     padding: 6px 0;
+}
+
+.stop-body-scroll {
+    scrollbar-gutter: stable;
+    overflow: hidden !important;
 }
 
 .suggestions-list li {

@@ -162,8 +162,7 @@
                                 <ul v-if="row.suggestionsTaskVisible" class="suggestions-list floating" 
                                     :style="row.taskDropdownStyle"
                                     @@mouseenter="isOverSuggestions = true"
-                                    @@mouseleave="isOverSuggestions = false"
-                                    @@wheel.stop>
+                                    @@mouseleave="isOverSuggestions = false">
                                     <li v-for="t in row.taskSuggestions" :key="t.id" @@click="selectSuggestion(row,'task',t)">
                                         {{ t.code }} - {{ t.name }}
                                     </li>
@@ -219,6 +218,27 @@
                     this.loadTimeEntries();
                     document.addEventListener('click', this._handleGlobalClick);
                     window.addEventListener('scroll', this.closeAllSuggestions, true);
+                },
+                watch: {
+                    //watcher per evitare lo scroll globale della pagina
+                    isOverSuggestions(newValue) {
+
+                        const html = document.documentElement;
+                        const body = document.body;
+
+                        if (newValue) {
+                          // Calcola la larghezza della scrollbar (es. 17px su Windows)
+                          const scrollbarWidth = window.innerWidth - html.clientWidth;
+
+                          if (scrollbarWidth > 0) {
+                            body.style.paddingRight = `${scrollbarWidth}px`;
+                          }
+                          body.classList.add('stop-body-scroll');
+                        } else {
+                          body.style.paddingRight = '';
+                          body.classList.remove('stop-body-scroll');
+                        }
+                    }
                 },
                 methods: {
                     isFirstOfDay(index) {

@@ -112,8 +112,7 @@
                                         class="suggestions-list floating"
                                         :style="row.activityDropdownStyle"
                                         @@mouseenter="isOverSuggestions = true"
-                                        @@mouseleave="isOverSuggestions = false"
-                                        @@wheel.stop>
+                                        @@mouseleave="isOverSuggestions = false">
                                         <li v-for="act in row.activitySuggestions"
                                             :key="act.id"
                                         @@click ="selectSuggestion(row,'activity',act)">
@@ -256,6 +255,28 @@
                     document.removeEventListener('keydown', this._handleKeydown);
 
                     window.removeEventListener('scroll', this._handleGlobalScroll, true);
+                },
+
+                watch: {
+                    //watcher per evitare lo scroll globale della pagina
+                    isOverSuggestions(newValue) {
+
+                        const html = document.documentElement;
+                        const body = document.body;
+
+                        if (newValue) {
+                          // Calcola la larghezza della scrollbar (es. 17px su Windows)
+                          const scrollbarWidth = window.innerWidth - html.clientWidth;
+
+                          if (scrollbarWidth > 0) {
+                            body.style.paddingRight = `${scrollbarWidth}px`;
+                          }
+                          body.classList.add('stop-body-scroll');
+                        } else {
+                          body.style.paddingRight = '';
+                          body.classList.remove('stop-body-scroll');
+                        }
+                    }
                 },
 
                 methods: {
@@ -651,6 +672,7 @@
                         }
 
                         this.isOverSuggestions = false; //reset della variabile per lo stato pulito
+                        document.body.classList.remove('stop-body-scroll');
 
                         this.autoPersistRow(row);
                     },

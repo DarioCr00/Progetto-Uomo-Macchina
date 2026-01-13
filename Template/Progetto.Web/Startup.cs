@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -41,11 +42,27 @@ namespace Progetto.Web
             });
 
             // SERVICES FOR AUTHENTICATION
-            services.AddSession();
+            services.AddSession(options =>
+            {
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.Cookie.HttpOnly = true;
+            });
+
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
             {
                 options.LoginPath = "/Login/Login";
                 options.LogoutPath = "/Login/Logout";
+
+                options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
+                options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+                options.Cookie.Name = ".AspNetCore.Cookies";
+            });
+
+            services.AddAntiforgery(options =>
+            {
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Lax;
             });
 
             services.AddHttpContextAccessor();
@@ -103,8 +120,9 @@ namespace Progetto.Web
 
                 // Https redirection only in production
                 app.UseHsts();
-                app.UseHttpsRedirection();
             }
+
+            app.UseHttpsRedirection();
 
             // Localization support if you want to
             app.UseRequestLocalization(SupportedCultures.CultureNames);
