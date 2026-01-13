@@ -1,0 +1,299 @@
+//tabella delle rendicontazioni, filtri
+
+.days-list-card {
+    background-color: #343A40;
+    margin: 0 45px;
+    padding: 20px 24px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    color: white;
+    width: calc(100% - 90px);
+    min-height: 700px;
+    height: auto;
+}
+
+.days-list-card table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* table styles inside days-list-card */
+.days-table-wrap {
+    overflow: visible !important;
+    overflow-x: auto;
+}
+
+/* base table */
+.days-table {
+    overflow: visible !important;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.days-table thead th {
+    font-weight: 700;
+    padding: 10px 8px;
+    text-align: left;
+}
+
+.days-table tbody td {
+    padding: 8px 6px;
+    vertical-align: top;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+/* inputs */
+.text-input, .select-input, .hours-input {
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    color: #fff;
+}
+
+.hours-input {
+    text-align: center;
+}
+
+/* suggestions dropdown */
+.relative {
+    position: relative;
+}
+
+.suggestions-list {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 6px);
+    max-height: 180px;
+    overflow-y: auto;
+    background: #24282C;
+    color: #E5E7EB;
+    border-radius: 6px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    z-index: 9999;
+    list-style: none;
+    padding: 4px 0;
+    margin: 0;
+    border: 1px solid #3A4046;
+    overscroll-behavior: contain !important;
+}
+
+.suggestions-list.floating {
+    background: #24282C;
+    border-radius: 6px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.4);
+    overscroll-behavior: contain;
+    list-style: none;
+    margin: 0;
+    padding: 6px 0;
+}
+
+.stop-body-scroll {
+    scrollbar-gutter: stable;
+    overflow: hidden !important;
+}
+
+.suggestions-list li {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    pointer-events: auto;
+}
+
+.suggestions-list li:hover {
+    background: #3A4046;
+}
+
+.suggestions-list .no-results {
+    color: #9CA3AF;
+    padding: 8px 12px;
+    cursor: default;
+}
+
+.select-input {
+    color: #E5E7EB;
+    border: 1px solid #3A4046;
+    border-radius: 6px;
+    padding: 6px 8px;
+}
+
+.select-input option {
+    background: #24282C;
+    color: #E5E7EB;
+}
+
+/* row saved / unsaved */
+.row-saved td {
+    opacity: 1;
+}
+
+.row-unsaved td {
+    opacity: 0.98;
+}
+
+//filters
+/* small helpers */
+.no-results {
+    font-size: 12px;
+    padding: 8px;
+    color: #666;
+}
+
+tr.row-disabled .btn-delete {
+    background-color: #1f2327 !important;
+    pointer-events: none;
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+tr.row-disabled td {
+    background-color: #1f2327 !important;
+    color: #9ca3af !important;
+}
+
+tr.row-disabled input,
+tr.row-disabled select {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.col-md-custom {
+    flex: 0 0 auto;
+    width: 22.90%; /* 2.5 col */
+}
+
+.col-md-mini-custom {
+    flex: 0 0 auto;
+    width: 5%;
+    justify-content: end;
+    align-items: end;
+}
+
+//Tabella Attivita' e Tasks
+.project-list {
+    width: 100%;
+    background: #2E343A;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+    color: white;
+    font-weight: 300;
+}
+
+.project-item {
+    padding: 15px 0;
+    border-bottom: 1px solid #444;
+}
+
+.project-item:last-child {
+    border-bottom: none;
+}
+
+.project-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.expand-icon {
+    font-size: 18px;
+    margin-right: 10px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.expand-icon.rotate {
+    transform: rotate(180deg);
+}
+
+/* Info attivita' */
+.project-info {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.project-name {
+    font-size: 18px;
+}
+
+.project-code {
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+/* Azioni attivita' */
+.project-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.action {
+    cursor: pointer;
+    font-size: 18px;
+    transition: opacity 0.2s ease;
+}
+
+.action:hover {
+    opacity: 0.6;
+}
+
+.edit {
+    color: #17C3B2;
+}
+
+.delete {
+    color: #ff6b6b;
+}
+
+.add-task {
+    color: #a8e6cf;
+}
+
+
+/* TASK LIST */
+.task-list {
+    margin-top: 12px;
+    padding-left: 35px;
+    border-left: 2px solid #555;
+}
+
+.task-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 6px 0;
+}
+
+/* barra verticale */
+.task-line {
+    width: 8px;
+    height: 8px;
+    background: #17C3B2;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.task-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.task-name {
+    font-size: 16px;
+}
+
+.task-code {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* Icone task */
+.task-actions {
+    display: flex;
+    gap: 12px;
+}

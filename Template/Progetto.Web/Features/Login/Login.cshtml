@@ -1,36 +1,48 @@
 ﻿@model Progetto.Web.Features.Login.LoginViewModel
 @{
+    Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Login";
 }
-<div class="container">
-    <form method="post" role="form" autocomplete="off">
-        <input asp-for="ReturnUrl" type="hidden" />
 
-        <div class="form-group">
-            <label asp-for=Email class="onit-label-required"></label>
-            <div class="input-group onit-input-group-union">
-                <input asp-for="Email" class="form-control" type="text" />
+<div class="login-wrapper">
+    <div class="login-card">
+        <form method="post" role="form" autocomplete="off">
+            <input asp-for="ReturnUrl" type="hidden" />
+
+            <div class="form-group">
+                <label asp-for=Email class="onit-label-required"></label>
+                <div class="input-group onit-input-group-union">
+                    <input asp-for="Email" class="form-control" type="text" />
+                </div>
+                <span asp-validation-for="Email" class="text-danger"></span>
             </div>
-            <span asp-validation-for="Email" class="text-danger"></span>
-        </div>
 
-        <div class="form-group">
-            <label asp-for=Password class="onit-label-required"></label>
-            <div class="input-group onit-input-group-union">
-                <input asp-for="Password" class="form-control" type="password" />
+            <div class="form-group">
+                <label asp-for=Password class="onit-label-required"></label>
+                <div class="input-group onit-input-group-union">
+                    <input asp-for="Password" class="form-control" type="password" />
+                </div>
+                <span asp-validation-for="Password" class="text-danger"></span>
             </div>
-            <span asp-validation-for="Password" class="text-danger"></span>
-        </div>
 
-        <div class="form-group">
-            <div class="form-check form-switch">
-                <input asp-for="RememberMe" class="form-check-input" role="switch">
-                <label asp-for="RememberMe" class="form-check-label">Rimani Connesso</label>
+            <div class="form-group">
+                <div class="form-check form-switch">
+                    <input asp-for="RememberMe" class="form-check-input" role="switch">
+                    <label asp-for="RememberMe" class="form-check-label">Rimani Connesso</label>
+                </div>
             </div>
-        </div>
 
-        <div class="form-group text-center mt-4">
-            <button type="submit" class="btn btn-primary">Accedi</button>
-        </div>
-    </form>
+            <div class="form-group text-center mt-4">
+                <button type="submit" class="btn btn-login-custom btn-lg">Accedi</button>
+            </div>
+        </form>
+    </div>
 </div>
+
+<style>
+    body {
+        background-color: #f0f0f0;
+        overflow: hidden;
+        height: 100vh;
+    }
+</style>

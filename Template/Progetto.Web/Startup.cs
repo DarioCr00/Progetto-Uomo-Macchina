@@ -1,19 +1,22 @@
 ﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 //using Progetto.Web.Hubs;
 using Progetto.Web.Infrastructure;
 using Progetto.Web.SignalR.Hubs;
+using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Template.Infrastructure;
 using Template.Services;
-using Template.Services.Shared;
 
 namespace Progetto.Web
 {
@@ -39,12 +42,31 @@ namespace Progetto.Web
             });
 
             // SERVICES FOR AUTHENTICATION
-            services.AddSession();
+            services.AddSession(options =>
+            {
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.Cookie.HttpOnly = true;
+            });
+
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
             {
                 options.LoginPath = "/Login/Login";
                 options.LogoutPath = "/Login/Logout";
+
+                options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
+                options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+                options.Cookie.Name = ".AspNetCore.Cookies";
             });
+
+            services.AddAntiforgery(options =>
+            {
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+            });
+
+            services.AddHttpContextAccessor();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
 
             var builder = services.AddMvc()
                 .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
@@ -78,6 +100,15 @@ namespace Progetto.Web
 
             // CONTAINER FOR ALL EXTRA CUSTOM SERVICES
             Container.RegisterTypes(services);
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "WebApp Rendicontazione Api",
+                    Version = "v1"
+                });
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -89,11 +120,18 @@ namespace Progetto.Web
 
                 // Https redirection only in production
                 app.UseHsts();
-                app.UseHttpsRedirection();
             }
+
+            app.UseHttpsRedirection();
 
             // Localization support if you want to
             app.UseRequestLocalization(SupportedCultures.CultureNames);
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebApp Rendicontazione Api v1");
+            });
 
             app.UseRouting();
 
@@ -113,7 +151,11 @@ namespace Progetto.Web
                 // ROUTING PER HUB
                 endpoints.MapHub<TemplateHub>("/templateHub");
 
-                endpoints.MapAreaControllerRoute("Example", "Example", "Example/{controller=Users}/{action=Index}/{id?}");
+                endpoints.MapAreaControllerRoute("TimeTracking", "TimeTracking", "TimeTracking/{controller=TimeTracking}/{action=Index}/{id?}");
+                endpoints.MapAreaControllerRoute("Administration", "Administration", "Administration/{controller=Admin}/{action=Index}/{id?}");
+                endpoints.MapAreaControllerRoute("Projects", "Projects", "Projects/{controller=Projects}/{action=Index}/{id?}");
+
+                endpoints.MapAreaControllerRoute("Example", "Example", "Example/{controller=Users}/{action=Index}/{id?}");    
                 endpoints.MapControllerRoute("default", "{controller=Login}/{action=Login}");
             });
         }

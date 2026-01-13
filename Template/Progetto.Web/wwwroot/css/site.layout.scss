@@ -1,1 +1,101 @@
 ﻿@import "site.variables.scss";
+
+.custom-navbar {
+    background-color: #374455 !important;
+    padding: 0.6rem 1rem;
+}
+
+.navbar-title {
+    color: white !important;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.navbar-title:hover {
+    color: #d7dce5 !important;
+    cursor: pointer;
+}
+
+.navbar-left-group {
+    gap: 30px;
+    white-space: nowrap;
+}
+
+.navbar-item-static {
+    font-size: 1.1rem;
+    color: white;
+    text-decoration: none;
+}
+
+.navbar-item-static:hover {
+    color: #f0f0f0;
+}
+
+.navbar-left-group a,
+.navbar-left-group span {
+    white-space: nowrap;
+}
+
+/* LINK NELLA NAVBAR */
+.custom-navbar .nav-link {
+    color: white !important;
+    font-weight: 400;
+}
+
+.custom-navbar .nav-link:hover {
+    color: #e5eaff !important;
+    cursor: pointer;
+}
+
+/* STATO ATTIVO */
+.custom-navbar .nav-link.active {
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+/* IMMAGINE UTENTE PIÙ PICCOLA */
+.user-profile-picture-small {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    margin-right: 6px;
+}
+
+/* ICONA HAMBURGER */
+.navbar-toggler {
+    border: none !important;
+}
+
+.navbar-toggler:hover {
+    opacity: 0.8;
+}
+
+#rendicontazione-app {
+    margin-top: 3%;
+}
+
+.main-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* occupa tutta l'altezza della finestra */
+    padding-top: 100px;
+    padding-left: 23.6%;
+    padding-right:23.6%; 
+    box-sizing: border-box;
+}
+
+.top-bar {
+    width: 70%;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.bottom-bar {
+    width: 70%;
+    height: 100%;
+    padding-top: 20px;
+    box-sizing: border-box;
+}

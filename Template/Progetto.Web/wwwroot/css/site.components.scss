@@ -1,0 +1,525 @@
+//Components come la login card, calendars, buttons etc...
+
+/* === login ===*/
+.login-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 10vh;
+}
+
+.login-card {
+    background-color: #454D55;
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+}
+
+.login-card label {
+    color: white;
+}
+
+.login-card .form-control {
+    background-color: #343A40;
+    color: white;
+    border: 1px solid #555;
+}
+
+.login-card .form-control:focus {
+    background-color: #343A40;
+    color: white;
+    border-color: #17C3B2;
+    box-shadow: none;
+}
+
+.btn-login-custom {
+    background-color: #17C3B2;
+    border-color: #17C3B2;
+    border-radius: 5%;
+    color: #fff;
+    font-size: 0.9rem;
+    padding: 0.45rem 1rem;
+    width: auto;
+    display: inline-block;
+}
+
+.btn-login-custom:hover {
+    background-color: #12a99a;
+    border-color: #12a99a;
+}
+
+.form-check-input:checked {
+    background-color: #17C3B2;
+    border-color: #17C3B2;
+}
+
+/* === calendars === */
+.calendar table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.calendar th {
+    padding: 4px;
+    font-weight: 600;
+    color: #6b7280; /* grigio */
+}
+
+.calendar td {
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+    text-align: center;
+    border-radius: 6px;
+}
+
+.calendar td.border {
+    border: 1px solid #d1d5db;
+}
+
+.calendar td:hover {
+    background: #e5e7eb;
+}
+
+/* Contenitore: allinea tre card in riga, responsive */
+.calendars-row {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+}
+
+/* Card comune */
+.calendar-card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.04);
+}
+
+/* dimensioni: small / normal / large */
+.calendar-card.small {
+    flex: 0 0 220px;
+}
+/* mese precedente/prossimo */
+.calendar-card.large {
+    flex: 0 0 520px;
+}
+/* mese corrente centrale */
+.calendar-card.normal {
+    flex: 0 0 320px;
+}
+/* fallback */
+
+/* Headers */
+.calendar-card h3 {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    text-align: center;
+    color: #1f2937;
+}
+
+.calendar-card h4 {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    text-align: center;
+    color: #1f2937;
+}
+
+/* Table styling */
+.calendar table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.calendar thead th {
+    color: #6b7280;
+    font-weight: 600;
+    padding: 6px 4px;
+    text-align: center;
+}
+
+.calendar tbody td {
+    width: 34px;
+    height: 36px;
+    padding: 6px 4px;
+    text-align: center;
+    border-radius: 0;
+}
+
+/* default cell look */
+.cal-cell {
+    transition: background .12s ease, color .12s ease;
+}
+
+/* states */
+.cal-cell.not_reported {
+    background: #ffffff;
+    color: #111827;
+    border: 1px solid transparent;
+}
+
+.cal-cell.insufficient {
+    background: #fff1f2;
+    color: #7f1d1d;
+    border: 1px solid #fecaca;
+}
+/* light red */
+.cal-cell.reported {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #bbf7d0;
+}
+/* light green */
+.cal-cell.overtime {
+    background: #bbf7d0;
+    color: #064e3b;
+    border: 1px solid #86efac;
+}
+/* stronger green */
+.cal-cell.non_working {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+/* gray */
+.cal-cell.missing {
+    background: #ffffff;
+    color: #9ca3af;
+}
+/* fallback */
+
+/* hover */
+.calendar tbody td:hover {
+    background: #eef2ff;
+    cursor: pointer;
+}
+
+/* rendimensionamento per il calendario centrale */
+.calendar.large td {
+    width: 40px;
+    height: 44px;
+    font-size: 1rem;
+}
+
+//toggleBtn
+.toggle-wrapper {
+    display: inline-flex;
+    margin-top: 65px;
+    margin-left: 45px;
+    margin-bottom: 20px;
+    border: 1px solid black;
+    border-radius: 25px;
+    overflow: hidden;
+}
+
+/* Pulsanti base */
+.toggle-btn {
+    padding: 10px 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background: white;
+    border: none;
+    color: #111;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .15s ease-in-out;
+    font-size: 0.95rem;
+}
+
+/* Divisore centrale tra i due */
+.toggle-btn + .toggle-btn {
+    border-left: 1px solid black;
+}
+
+.toggle-btn.selected {
+    background: #17A2B8 !important;
+    color: black !important;
+}
+
+.toggle-btn .checkmark {
+    opacity: 0;
+    transition: opacity .15s ease-in-out;
+}
+
+.toggle-btn.selected .checkmark {
+    opacity: 1;
+}
+
+.toggle-btn:hover {
+    background: #e5f7fa;
+}
+
+/* delete button */
+.btn-delete {
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 6px;
+}
+
+.btn-delete:hover {
+    color: #ffdddd;
+}
+
+#applyFiltersBtn {
+    background-color: #454D55;
+    border-color: #454D55;
+    color: white;
+    height: auto;
+    padding: 0.375rem 0.75rem;
+}
+
+#applyFiltersBtn:hover {
+    background-color: #495057;
+    border-color: #495057;
+}
+
+/* === Overlay ===*/
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Card */
+.project-card {
+    background: #454D55;
+    padding: 25px 30px;
+    width: 600px;
+    max-width: 90vw;
+    border-radius: 20px;
+    aspect-ratio: 1036 / 707;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: white;
+    font-weight: 300;
+    text-align: center;
+}
+
+.project-card h2 {
+    color: white;
+    font-weight: 400;
+    margin-bottom: 25px;
+}
+
+.project-card label {
+    font-weight: 300;
+    color: white;
+    display: block;
+    margin-bottom: 5px;
+    text-align: left;
+}
+
+.project-card.confirm-mode {
+    width: 450px;
+    aspect-ratio: auto;
+    min-height: 200px;
+    padding: 30px;
+}
+
+.confirm-text {
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.confirm-text span {
+    font-weight: 600;
+    color: #FF6B6B; /* Colore per evidenziare codice e nome */
+}
+
+.input, .fake-input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 8px; /* piu' arrotondato */
+    border: 1px solid #555;
+    background-color: #343A40; /* richiesto */
+    color: white;
+    font-weight: 300; /* testo piu' sottile */
+    font-size: 0.95rem;
+}
+
+.input:focus {
+    outline: none;
+    border-color: #17C3B2; /* colore login */
+    box-shadow: 0 0 5px #17C3B2;
+}
+
+.two-cols {
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+.two-cols > div {
+    flex: 1;
+}
+
+.btn-row {
+    display: flex;
+    justify-content: center;
+    gap: 100px;
+    margin-top: 20px;
+}
+
+.cancel {
+    background: #FF4D4F;
+    color: white;
+}
+
+.cancel:hover {
+    background-color: #E63946;
+}
+
+.confirm {
+    background: #17C3B2;
+    color: white;
+}
+
+.confirm:hover:not(.disabled) {
+    background-color: #12a99a;
+}
+
+.confirm.disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.error {
+    color: #FF6B6B;
+    font-size: 12px;
+    height: 16px;
+}
+
+.fake-input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fake-input .avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 20%;
+    margin-right: 2px;
+}
+
+.project-item.empty {
+    border-bottom: 1px solid #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+}
+
+.project-header.empty-header {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.empty-text {
+    font-style: italic;
+    color: #666;
+}
+
+.assigned-users-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+.user-tag {
+    display: flex;
+    align-items: center;
+    background: #e2e3e5;
+    color: black;
+    margin-top: 6px;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 0.9em;
+}
+
+.user-tag img {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    margin-right: 4px;
+}
+
+.user-tag .remove {
+    margin-left: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.search-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.search-dropdown {
+    position: absolute;
+    top: 100%; /* Incollata sotto l'input */
+    left: 0;
+    width: 100%;
+    background: #343A40;
+    color: #E5E7EB;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    max-height: 180px;
+    overflow-y: hidden;
+    z-index: 20;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.search-dropdown div {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.search-dropdown div:hover {
+    background: #24282C;
+}
+
+#assignedUserInput {
+    transition: border-radius 0.2s;
+    margin-bottom: 0;
+}
+
+//bottone creazione task
+.btn-create {
+    background: #343A40;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: white;
+}

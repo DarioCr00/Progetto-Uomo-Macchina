@@ -1,0 +1,400 @@
+﻿@model Progetto.Web.Features.Administration.AdminFilterViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Amministrazione";
+}
+
+<div id="admin-timeentries-app" class="container-fluid px-4">
+    <div class="card mb-5 mt-4 border-0">
+        <form id="filterForm" method="get" onsubmit="return false;">
+            <div class="row g-3 justify-content-center">
+                <!-- FILTRO GENERICO -->
+                <div class="col-md-custom">
+                    <label class="form-label fw-bold">Ricerca generica</label>
+                    <div class="input-group">
+                        <input type="text"
+                               class="form-control"
+                               id="SearchText"
+                               asp-for="SearchText"
+                               placeholder="Cerca data o descrizione..." />
+                    </div>
+                </div>
+
+                <!-- FILTRO UTENTI -->
+                <div class="col-md-custom">
+                    <label class="form-label fw-bold">Utente</label>
+                    <div class="input-group">
+                        <select class="form-select" id="SelectedUserId" asp-for="SelectedUserId">
+                            <option value="" disabled selected>Seleziona un utente</option>
+                            @foreach (var u in Model.Users)
+                            {
+                                <option value="@u.Id">
+                                    @u.FirstName @u.LastName
+                                </option>
+                            }
+                        </select>
+                        <button type="button" class="btn btn-outline-secondary"
+                                onclick="document.getElementById('SelectedUserId').value='';">
+                            <i class="fa-regular fa-circle-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- FILTRO ATTIVITÀ -->
+                <div class="col-md-custom">
+                    <label class="form-label fw-bold">Attività</label>
+                    <div class="input-group">
+                        <select class="form-select" id="SelectedProjectId" asp-for="SelectedProjectId">
+                            <option value="">Tutte</option>
+                            @foreach (var p in Model.Projects)
+                            {
+                                <option value="@p.Id">
+                                    @p.Code - @p.Name
+                                </option>
+                            }
+                        </select>
+                        <button type="button" class="btn btn-outline-secondary"
+                                onclick="document.getElementById('SelectedProjectId').value='';">
+                            <i class="fa-regular fa-circle-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- FILTRO TASK -->
+                <div class="col-md-custom">
+                    <label class="form-label fw-bold">Task</label>
+                    <div class="input-group">
+                        <select class="form-select" id="SelectedTaskId" asp-for="SelectedTaskId">
+                            <option value="">Tutti</option>
+                            @foreach (var t in Model.Tasks)
+                            {
+                                <option value="@t.Id">
+                                    @t.Code - @t.Name
+                                </option>
+                            }
+                        </select>
+                        <button type="button" class="btn btn-outline-secondary"
+                                onclick="document.getElementById('SelectedTaskId').value='';">
+                            <i class="fa-regular fa-circle-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PULSANTE CERCA -->
+                <div class="col-md-mini-custom d-flex">
+                    <button type="button" class="btn" id="applyFiltersBtn">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="days-list-card">
+        <div class="days-table-wrap">
+            <table class="days-table w-full">
+                <thead style="background:#454D55;">
+                    <tr>
+                        <th class="px-3 py-2 text-left text-white">Giorno</th>
+                        <th class="px-2 py-2 text-center text-white" style="width:85px">Ore</th>
+                        <th class="px-3 py-2 text-left text-white">Descrizione</th>
+                        <th class="px-3 py-2 text-left text-white">Attività</th>
+                        <th class="px-3 py-2 text-left text-white">Task</th>
+                        <th class="px-3 py-2 text-left text-white">Modalità</th>
+                        <th class="px-2 py-2 text-white" style="width:48px"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-if="rows.length === 0">
+                        <td colspan="7" class="px-3 py-4 text-gray-300">Nessuna time entry disponibile</td>
+                    </tr>
+
+                    <tr v-for="(row, index) in rows" :key="row._localId"
+                        :class="[ 'transition', row.saved ? 'row-saved' : 'row-unsaved' ]">
+                        <!-- Giorno: solo sulla prima riga -->
+                        <td class="px-3 py-2 align-top text-white">
+                            <div v-if="row.date && isFirstOfDay(index)" class="font-medium">{{ prettyDay(row.date) }}</div>
+                            <div v-else-if="row.date">&nbsp;</div>
+                            <div v-else class="placeholder-day">&nbsp;</div>
+                        </td>
+                        <td class="px-2 py-2 text-center">
+                            <input type="number" class="hours-input" v-model.number="row.hours"
+                                   min="0" max="24" step="1"
+                                   placeholder="0"
+                                   :disabled="row.isPlaceholder"
+                                   @@input="normalizeHours(row)"
+                                   @@blur="autoPersistRow(row)" />
+                        </td>
+                        <td class="px-3 py-2">
+                            <input type="text" class="text-input" v-model="row.notes"
+                                   placeholder="Descrizione breve dell'attività"
+                                   :disabled="row.isPlaceholder"
+                                   @@blur="autoPersistRow(row)" />
+                        </td>
+                        <td class="px-3 py-2 relative">
+                            <input type="text" class="text-input activity-input" v-model="row.activityText"
+                                   placeholder="Cerca codice attività"
+                                   autocomplete="off"
+                                   :disabled="row.isPlaceholder"
+                                   @@input="onTypeSearch(row,'activity')"
+                                   @@focus="openSuggestions(row,'activity',$event)" />
+                            <Teleport to="body">
+                                <ul v-if="row.suggestionsActivityVisible" class="suggestions-list floating" 
+                                    :style="row.activityDropdownStyle"
+                                    @@mouseenter="isOverSuggestions = true"
+                                    @@mouseleave="isOverSuggestions = false">
+                                    <li v-for="a in row.activitySuggestions" :key="a.id" @@click="selectSuggestion(row,'activity',a)">
+                                        {{ a.code }} - {{ a.name }}
+                                    </li>
+                                    <li v-if="row.activitySuggestions.length===0" class="no-results">Nessun match</li>
+                                </ul>
+                            </Teleport>
+                        </td>
+                        <td class="px-3 py-2 relative">
+                            <input type="text" class="text-input task-input" v-model="row.taskText"
+                                   placeholder="Cerca codice task"
+                                   autocomplete="off"
+                                   :disabled="row.isPlaceholder"
+                                   @@input="onTypeSearch(row,'task')"
+                                   @@focus="openSuggestions(row,'task',$event)" />
+                            <Teleport to="body">
+                                <ul v-if="row.suggestionsTaskVisible" class="suggestions-list floating" 
+                                    :style="row.taskDropdownStyle"
+                                    @@mouseenter="isOverSuggestions = true"
+                                    @@mouseleave="isOverSuggestions = false">
+                                    <li v-for="t in row.taskSuggestions" :key="t.id" @@click="selectSuggestion(row,'task',t)">
+                                        {{ t.code }} - {{ t.name }}
+                                    </li>
+                                    <li v-if="row.taskSuggestions.length===0" class="no-results">Nessun match</li>
+                                </ul>
+                            </Teleport>
+                        </td>
+                        <td class="px-3 py-2">
+                            <select v-model="row.type" class="select-input" :disabled="row.isPlaceholder" @@blur="autoPersistRow(row)">
+                                <option v-for="m in workTypes" :value="m.value">{{ m.label }}</option>
+                            </select>
+                        </td>
+                        <td class="px-2 py-2 text-center">
+                            <button class="btn-delete" :disabled="row.isPlaceholder" @@click.prevent="deleteRow(row)">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+    <script>
+
+        (function(){
+            const { createApp } = Vue;
+
+            const app = createApp({
+                data() {
+                    return {
+                        rows: [],
+                        activitiesPool: [],
+                        tasksPool: [],
+                        workTypes: [
+                            { value: 0, label: 'Normal' },
+                            { value: 1, label: 'Overtime' },
+                            { value: 2, label: 'Travel' },
+                            { value: 3, label: 'Other' },
+                        ],
+                        _localRowCounter: 1,
+                        isOverSuggestions: false
+                    };
+                },
+                mounted() {
+                    this.loadPools();
+                    this.loadTimeEntries();
+                    document.addEventListener('click', this._handleGlobalClick);
+                    window.addEventListener('scroll', this.closeAllSuggestions, true);
+                },
+                watch: {
+                    //watcher per evitare lo scroll globale della pagina
+                    isOverSuggestions(newValue) {
+
+                        const html = document.documentElement;
+                        const body = document.body;
+
+                        if (newValue) {
+                          // Calcola la larghezza della scrollbar (es. 17px su Windows)
+                          const scrollbarWidth = window.innerWidth - html.clientWidth;
+
+                          if (scrollbarWidth > 0) {
+                            body.style.paddingRight = `${scrollbarWidth}px`;
+                          }
+                          body.classList.add('stop-body-scroll');
+                        } else {
+                          body.style.paddingRight = '';
+                          body.classList.remove('stop-body-scroll');
+                        }
+                    }
+                },
+                methods: {
+                    isFirstOfDay(index) {
+                        if (index === 0) return true;
+                        const current = this.rows[index].date;
+                        const previous = this.rows[index - 1].date;
+                        if (!current || !previous) return true;
+
+                        const d1 = new Date(current).toDateString();
+                        const d2 = new Date(previous).toDateString();
+                        return d1 !== d2;
+                    },
+                    prettyDay(date) {
+                        if(!date) return '';
+                        const d = new Date(date);
+                        return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+                    },
+                    normalizeHours(row) {
+                        if(row.hours===null || row.hours==='') return row.hours=null;
+                        let v = parseInt(row.hours);
+                        if(isNaN(v)) v=null;
+                        if(v!==null){ if(v<0) v=0; if(v>24) v=24; }
+                        row.hours=v;
+                    },
+                    async loadTimeEntries() {
+                        try {
+                            const userId = document.getElementById("SelectedUserId").value;
+                            if(!userId) {
+                                this.rows = [];
+                                return;
+                            }
+
+                            const res = await axios.get('/api/Administration/AdminApi/getTimeEntries', {
+                                params: {
+                                    userId: userId,
+                                    queryText: document.getElementById("SearchText")?.value || "",
+                                    projectId: document.getElementById("SelectedProjectId")?.value || "",
+                                    taskId: document.getElementById("SelectedTaskId")?.value || ""
+                                }
+                            });
+
+                            const data = [...res.data].sort((a, b) => new Date(b.date) - new Date(a.date));
+                            this.rows = data.map(e=>({
+                                _localId: `r${this._localRowCounter++}`,
+                                id: e.id,
+                                date: e.date,
+                                hours: e.hoursWorked,
+                                notes: e.notes,
+                                activityId: e.projectId,
+                                activityText: `${e.projectCode} - ${e.projectName || ''}`,
+                                activitySuggestions: [],
+                                suggestionsActivityVisible:false,
+                                taskId: e.taskId,
+                                taskText: `${e.taskCode} - ${e.taskName || ''}`,
+                                taskSuggestions: [],
+                                suggestionsTaskVisible:false,
+                                type: e.type,
+                                saved:true
+                            }));
+
+                            // assicurarsi minimo 12 righe
+                            while(this.rows.length<12){
+                                this.rows.push({
+                                    _localId:`r${this._localRowCounter++}`,
+                                    id:null,date:null,hours:null,notes:'',
+                                    activityId:null,activityText:'',
+                                    activitySuggestions:[],suggestionsActivityVisible:false,
+                                    taskId:null,taskText:'',taskSuggestions:[],suggestionsTaskVisible:false,
+                                    type:0,saved:false,
+                                    isPlaceholder:true
+                                });
+                            }
+                        } catch(e){
+                            console.error(e);
+                        }
+                    },
+                    async loadPools() {
+                        try {
+                            const [projRes, taskRes] = await Promise.all([
+                                axios.get('/api/TimeTracking/TimeTrackingApi/projects'),
+                                axios.get('/api/timetracking/timetrackingApi/tasks')
+                            ]);
+                            this.activitiesPool = (projRes.data||[]).map(p=>({id:p.id,code:p.code,name:p.name}));
+                            this.tasksPool = (taskRes.data||[]).map(t=>({id:t.id,code:t.code,name:t.name}));
+                        } catch(e){ console.error(e); this.activitiesPool=[]; this.tasksPool=[]; }
+                    },
+                    async autoPersistRow(row){
+                        if(!row.activityId || !row.taskId || row.hours==null) return;
+                        const payload={
+                            ProjectId: row.activityId,
+                            TaskId: row.taskId,
+                            Date: row.date || new Date().toISOString(),
+                            HoursWorked: row.hours,
+                            Notes: row.notes,
+                            Type: row.type
+                        };
+                        try{
+                            if(row.id){
+                                await axios.put(`/api/timeentries/${row.id}`, payload);
+                            } else {
+                                const res = await axios.post('/api/timeentries', payload);
+                                row.id=res.data?.id;
+                                row.saved=true;
+                            }
+                        } catch(e){ console.error(e); }
+                    },
+                    async deleteRow(row){
+                        if(!row.id) { const idx=this.rows.indexOf(row); if(idx>=0) this.rows.splice(idx,1); return; }
+                        try{
+                            await axios.delete(`/api/timeentries/${row.id}`);
+                            const idx=this.rows.indexOf(row); if(idx>=0) this.rows.splice(idx,1);
+                        } catch(e){ console.error(e); }
+                    },
+                    onTypeSearch(row, kind){
+                        const text = kind==='activity'?row.activityText:row.taskText;
+                        if(!text || text.trim()===''){ if(kind==='activity') row.activitySuggestions=[]; else row.taskSuggestions=[]; return; }
+                        const pool = kind==='activity'?this.activitiesPool:this.tasksPool;
+                        const matches = pool.filter(p=>(p.code?.toLowerCase().includes(text.toLowerCase())||p.name?.toLowerCase().includes(text.toLowerCase())));
+                        const limited = matches.slice(0,8);
+                        if(kind==='activity'){ row.activitySuggestions=limited; row.suggestionsActivityVisible=true; }
+                        else{ row.taskSuggestions=limited; row.suggestionsTaskVisible=true; }
+                    },
+                    openSuggestions(row,kind,e){
+                        const rect = e.target.getBoundingClientRect();
+                        const style={position:'fixed',top:`${rect.bottom+4}px`,left:`${rect.left}px`,width:`${rect.width}px`,zIndex:100000};
+                        if(kind==='activity'){ row.activityDropdownStyle=style; row.suggestionsActivityVisible=true; }
+                        else{ row.taskDropdownStyle=style; row.suggestionsTaskVisible=true; }
+                    },
+                    selectSuggestion(row,kind,item){
+                        if(kind==='activity'){ row.activityId=item.id; row.activityText=`${item.code} - ${item.name}`; row.activitySuggestions=[]; row.suggestionsActivityVisible=false; }
+                        else{ row.taskId=item.id; row.taskText=`${item.code} - ${item.name}`; row.taskSuggestions=[]; row.suggestionsTaskVisible=false; }
+                        this.autoPersistRow(row);
+                    },
+                    _handleGlobalClick(e){
+                        this.rows.forEach(r=>{
+                            if(r.suggestionsActivityVisible){ const input=e.target.closest('.activity-input'); const drop=e.target.closest('.suggestions-list'); if(!input&&!drop) r.suggestionsActivityVisible=false; }
+                            if(r.suggestionsTaskVisible){ const input=e.target.closest('.task-input'); const drop=e.target.closest('.suggestions-list'); if(!input&&!drop) r.suggestionsTaskVisible=false; }
+                        });
+                    },
+                    closeAllSuggestions() {
+
+                        if (this.isOverSuggestions) {
+                            return;
+                        }
+
+                        this.rows.forEach(r => {
+                            r.suggestionsActivityVisible = false;
+                            r.suggestionsTaskVisible = false;
+                        });
+                    },
+                }
+            }).mount('#admin-timeentries-app');
+
+            document.getElementById("applyFiltersBtn")
+                    .addEventListener("click", () => app.loadTimeEntries());
+        })();
+
+    </script>
+}
