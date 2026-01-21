@@ -40,9 +40,9 @@
         const btnCancel = document.getElementById("btnCancel");
         const btnConfirm = document.getElementById("btnConfirm");
 
-        // Regex per CODICE: Lettera maiuscola + 4 cifre (Es: C0001) / Lettere maiuscole + 3 cifre (Es: TSK001)
-        const projectCodeRegex = /^[A-Z][0-9]{4}$/;
-        const taskCodeRegex = /^TSK[0-9]{3}$/;
+        // Regex per CODICE: Almeno una lettera [a-z] e almeno un numero [0-9], case-insensitive
+        const projectCodeRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])[a-zA-Z0-9]+$/;
+        const taskCodeRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])[a-zA-Z0-9]+$/;
 
         btnOpen.addEventListener("click", () => {
             //overlay.classList.remove("hidden");
@@ -93,9 +93,7 @@
                     valid = false;
                     if (codeError)
                         codeError.textContent =
-                            modalMode.includes("Project")
-                            ? "Formato non valido. Es: C0001"
-                            : "Formato non valido. Es: TSK001";
+                            "Richiesti almeno una lettera e un numero";
                 } else {
                     if (codeError)
                         codeError.textContent = "";
@@ -399,9 +397,11 @@
                 return;
             }
 
+            const rawCode = document.getElementById("inputCode").value;
+
             const payload = {
                 name: document.getElementById("inputName").value,
-                code: document.getElementById("inputCode").value,
+                code: rawCode.trim().toUpperCase(),
                 assignedUserIds: assignedUsers.map(u => u.id)
             };
 
@@ -443,8 +443,14 @@
                 closeOverlay();
                 loadProjects();
             } catch (err) {
-                console.error(err);
-                alert("Errore durante il salvataggio");
+                if (err.response && err.response.status === 409) {
+                    alert(err.response.data);
+                } else if (err.response && err.response.data && err.response.data.errors) {
+                    alert("Dati non validi. Controlla i campi.");
+                } else {
+                    alert("Errore durante il salvataggio.");
+                }
+                console.error("Dettaglio tecnico errore:", err);
             }
         });
 

@@ -115,13 +115,19 @@ namespace Progetto.Web.Features.TimeEntries
         public async Task<ActionResult> Update(Guid id, TimeEntryUpdateDto dto)
         {
             var userId = _currentUser.UserId;
+            var isAdmin = User.IsInRole("Admin");
+            var isTeamLeader = User.IsInRole("teamLeader");
 
             var entry = await _context.TimeEntries
-                .Where(t => t.UserId == userId && t.Id == id)
+                .Where(t =>t.Id == id)
                 .FirstOrDefaultAsync();
 
             if (entry == null) return NotFound();
 
+            if (entry.UserId != userId && !User.IsInRole("Admin") && !User.IsInRole("TeamLeader"))
+            {
+                return Forbid();
+            }
 
             entry.ProjectId = dto.ProjectId;
             entry.TaskId = dto.TaskId;
@@ -139,12 +145,19 @@ namespace Progetto.Web.Features.TimeEntries
         public async Task<ActionResult> Delete(Guid id)
         {
             var userId = _currentUser.UserId;
+            var isAdmin = User.IsInRole("Admin");
+            var isTeamLeader = User.IsInRole("teamLeader");
 
             var entry = await _context.TimeEntries
-                .Where(t => t.UserId == userId && t.Id == id)
+                .Where(t => t.Id == id)
                 .FirstOrDefaultAsync();
 
             if (entry == null) return NotFound();
+
+            if (entry.UserId != userId && !User.IsInRole("Admin") && !User.IsInRole("TeamLeader"))
+            {
+                return Forbid();
+            }
 
             _context.TimeEntries.Remove(entry);
             await _context.SaveChangesAsync();

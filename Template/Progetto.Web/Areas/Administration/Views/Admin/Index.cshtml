@@ -16,6 +16,7 @@
                         <input type="text"
                                class="form-control"
                                id="SearchText"
+                               v-model="filters.searchText"
                                asp-for="SearchText"
                                placeholder="Cerca data o descrizione..." />
                     </div>
@@ -25,7 +26,7 @@
                 <div class="col-md-custom">
                     <label class="form-label fw-bold">Utente</label>
                     <div class="input-group">
-                        <select class="form-select" id="SelectedUserId" asp-for="SelectedUserId">
+                        <select class="form-select" id="SelectedUserId" asp-for="SelectedUserId" v-model="filters.userId">
                             <option value="" disabled selected>Seleziona un utente</option>
                             @foreach (var u in Model.Users)
                             {
@@ -35,7 +36,7 @@
                             }
                         </select>
                         <button type="button" class="btn btn-outline-secondary"
-                                onclick="document.getElementById('SelectedUserId').value='';">
+                                @@click="filters.userId = '';">
                             <i class="fa-regular fa-circle-xmark"></i>
                         </button>
                     </div>
@@ -45,7 +46,7 @@
                 <div class="col-md-custom">
                     <label class="form-label fw-bold">Attività</label>
                     <div class="input-group">
-                        <select class="form-select" id="SelectedProjectId" asp-for="SelectedProjectId">
+                        <select class="form-select" id="SelectedProjectId" asp-for="SelectedProjectId" v-model="filters.projectId">
                             <option value="">Tutte</option>
                             @foreach (var p in Model.Projects)
                             {
@@ -55,7 +56,7 @@
                             }
                         </select>
                         <button type="button" class="btn btn-outline-secondary"
-                                onclick="document.getElementById('SelectedProjectId').value='';">
+                                @@click="filters.projectId = '';">
                             <i class="fa-regular fa-circle-xmark"></i>
                         </button>
                     </div>
@@ -65,7 +66,7 @@
                 <div class="col-md-custom">
                     <label class="form-label fw-bold">Task</label>
                     <div class="input-group">
-                        <select class="form-select" id="SelectedTaskId" asp-for="SelectedTaskId">
+                        <select class="form-select" id="SelectedTaskId" asp-for="SelectedTaskId" v-model="filters.taskId">
                             <option value="">Tutti</option>
                             @foreach (var t in Model.Tasks)
                             {
@@ -75,7 +76,7 @@
                             }
                         </select>
                         <button type="button" class="btn btn-outline-secondary"
-                                onclick="document.getElementById('SelectedTaskId').value='';">
+                                @@click="filters.taskId = '';">
                             <i class="fa-regular fa-circle-xmark"></i>
                         </button>
                     </div>
@@ -107,7 +108,7 @@
                 </thead>
                 <tbody>
                     <tr v-if="rows.length === 0">
-                        <td colspan="7" class="px-3 py-4 text-gray-300">Nessuna time entry disponibile</td>
+                        <td colspan="7" class="px-3 py-4 text-gray-300">Selezionare un utente per vederne le rendicontazioni.</td>
                     </tr>
 
                     <tr v-for="(row, index) in rows" :key="row._localId"
@@ -200,6 +201,12 @@
             const app = createApp({
                 data() {
                     return {
+                        filters: {
+                            userId: '',
+                            projectId: '',
+                            taskId: '',
+                            searchText: ''
+                        },
                         rows: [],
                         activitiesPool: [],
                         tasksPool: [],
@@ -214,6 +221,10 @@
                     };
                 },
                 mounted() {
+                    const saved = localStorage.getItem('adminTimeFilters');
+                    if (saved) {
+                        this.filters = JSON.parse(saved);
+                    }
                     this.loadPools();
                     this.loadTimeEntries();
                     document.addEventListener('click', this._handleGlobalClick);
@@ -264,19 +275,24 @@
                         row.hours=v;
                     },
                     async loadTimeEntries() {
+                        localStorage.setItem('adminTimeFilters', JSON.stringify(this.filters));
                         try {
-                            const userId = document.getElementById("SelectedUserId").value;
-                            if(!userId) {
-                                this.rows = [];
-                                return;
+                            if (!this.filters.userId) {
+                                this.filters.userId = document.getElementById("SelectedUserId")?.value;
+                                if (!this.filters.userId) {
+                                    this.rows = [];
+                                    return;
+                                }
                             }
+
+                            
 
                             const res = await axios.get('/api/Administration/AdminApi/getTimeEntries', {
                                 params: {
-                                    userId: userId,
-                                    queryText: document.getElementById("SearchText")?.value || "",
-                                    projectId: document.getElementById("SelectedProjectId")?.value || "",
-                                    taskId: document.getElementById("SelectedTaskId")?.value || ""
+                                    userId: this.filters.userId,
+                                    queryText: this.filters.searchText,
+                                    projectId: this.filters.projectId,
+                                    taskId: this.filters.taskId
                                 }
                             });
 
@@ -300,17 +316,17 @@
                             }));
 
                             // assicurarsi minimo 12 righe
-                            while(this.rows.length<12){
-                                this.rows.push({
-                                    _localId:`r${this._localRowCounter++}`,
-                                    id:null,date:null,hours:null,notes:'',
-                                    activityId:null,activityText:'',
-                                    activitySuggestions:[],suggestionsActivityVisible:false,
-                                    taskId:null,taskText:'',taskSuggestions:[],suggestionsTaskVisible:false,
-                                    type:0,saved:false,
-                                    isPlaceholder:true
-                                });
-                            }
+                            // while(this.rows.length<12){
+                            //     this.rows.push({
+                            //         _localId:`r${this._localRowCounter++}`,
+                            //         id:null,date:null,hours:null,notes:'',
+                            //         activityId:null,activityText:'',
+                            //         activitySuggestions:[],suggestionsActivityVisible:false,
+                            //         taskId:null,taskText:'',taskSuggestions:[],suggestionsTaskVisible:false,
+                            //         type:0,saved:false,
+                            //         isPlaceholder:true
+                            //     });
+                            // }
                         } catch(e){
                             console.error(e);
                         }

@@ -280,6 +280,18 @@
                 },
 
                 methods: {
+                    isDayIncomplete(dayObj) {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+
+                        const checkDate = new Date(dayObj.date + 'T00:00:00');
+
+                        const isPast = checkDate < today;
+                        const hasNoHours = (dayObj.totalHours || 0) === 0;
+                        const isWorkingDay = !this.isNonWorkingDay(dayObj.date);
+
+                        return isPast && hasNoHours && isWorkingDay;
+                    },
                     //formatting
                     monthName(m) {
                         return new Date(2024, m - 1, 1).toLocaleString("it-IT", { month: "long" });
@@ -341,8 +353,11 @@
                         const first = new Date(year, month - 1, 1);
                         const last = new Date(year, month, 0);
 
-                        let startDay = first.getDay(); // 0..6 (Sun..Sat)
-                        startDay = startDay === 0 ? 6 : startDay - 1; // 0=Mon .. 6=Sun
+                        const today = new Date();
+                        today.setHours(0,0,0,0);
+
+                        let startDay = first.getDay();
+                        startDay = startDay === 0 ? 6 : startDay - 1;
 
                         let html = '<table class="w-full text-sm">';
                         html += '<thead><tr class="text-xs text-gray-600"><th>Lun</th><th>Mar</th><th>Mer</th><th>Gio</th><th>Ven</th><th>Sab</th><th>Dom</th></tr></thead>';
@@ -352,9 +367,16 @@
 
                         for (let day = 1; day <= last.getDate(); day++) {
                             const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                            const st = (statusArray.find(s => s.date === dateStr) || {}).state || 'missing';
+                            const dateObj = new Date(year, month - 1, day);
 
-                            // decide classe della cella
+                            let st = (statusArray.find(s => s.date === dateStr) || {}).state || 'missing';
+
+                            if (st === 'missing' && dateObj < today) {
+                                if (!this.isNonWorkingDay(dateStr)) {
+                                    st = 'missing-past';
+                                }
+                            }
+
                             const cls = this._cellClassFromState(st);
                             html += `<td class="${cls}">${day}</td>`;
 
@@ -479,21 +501,19 @@
                             suggestionsTaskVisible: false,
                             mode: e.type ?? 0,
                             saved: true,
-                            disabled: this.isNonWorkingDay(date)
+                            disabled: false
                         };
                     },
 
                     //row handler
                     _newEmptyRow(date) {
 
-                        const disabled = this.isNonWorkingDay(date);
-
                         return {
                             _localId: `r${this._localRowCounter++}`,
                             id: null,            // backend id after save
                             date: date,
-                            hours: disabled ? null : null,
-                            description: disabled ? '' : '',
+                            hours: null,
+                            description:'',
                             activityId: null,
                             activityText: '',
                             activitySuggestions: [],
@@ -505,15 +525,14 @@
                             mode: 0,
                             saved: false,
 
-                            disabled: disabled
+                            disabled: false
                         };
                     },
 
                     //TimeEntry validation 
                     isRowValid(row) {
                         return (
-                            row.activityId &&
-                            row.taskId &&
+                            row.description &&
                             row.hours != null &&
                             row.hours > 0 && 
                             row.mode !== null && 
@@ -544,11 +563,11 @@
                         row._saving = true;
 
                         const payload = {
-                            ProjectId: row.activityId,
-                            TaskId: row.taskId,
+                            ProjectId: row.activityId || null,
+                            TaskId: row.taskId || null,
                             Date: row.date,
                             HoursWorked: row.hours,
-                            Notes: row.description || null,
+                            Notes: row.description || "",
                             Type: row.mode
                         };
 

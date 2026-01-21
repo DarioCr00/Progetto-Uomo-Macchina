@@ -12236,6 +12236,12 @@ textarea.form-control-lg {
   color: #9ca3af;
 }
 
+.cal-cell.missing-past {
+  background: #fff1f2;
+  color: #7f1d1d;
+  border: 1px solid #fecaca;
+}
+
 /* fallback */
 /* hover */
 .calendar tbody td:hover {
