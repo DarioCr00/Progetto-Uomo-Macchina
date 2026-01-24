@@ -98,7 +98,7 @@ namespace Progetto.Web.Areas.TimeTracking.Controllers
             {
                 var dayEntries = entries.Where(e => e.Date.Date == d.Date).ToList();
                 decimal? totalHours = dayEntries.Any() ? dayEntries.Sum(e => e.HoursWorked) : (decimal?)null;
-                string summary = dayEntries.Any() ? string.Join(", ", dayEntries.Select(e => e.Project.Name)) : "";
+                string summary = dayEntries.Any() ? string.Join(", ", dayEntries.Select(e => e.Project?.Name ?? "Nessun Progetto")) : "";
 
                 days.Add(new
                 {
